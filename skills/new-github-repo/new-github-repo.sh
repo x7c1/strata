@@ -223,6 +223,42 @@ create_repository() {
     print_debug "Repository created: $REPO_NAME"
 }
 
+# Copy infrastructure files to repository
+copy_infrastructure_files() {
+    local temp_dir="$1"
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local templates_dir="$script_dir/templates"
+
+    print_debug "Copying infrastructure files from: $templates_dir"
+
+    # Copy Dockerfile (prepared from template before script execution)
+    if [ -f "$templates_dir/../Dockerfile" ]; then
+        cp "$templates_dir/../Dockerfile" "$temp_dir/repo/"
+        print_debug "Copied Dockerfile"
+    fi
+
+    # Copy docker-compose.yml
+    if [ -f "$templates_dir/docker-compose.yml" ]; then
+        cp "$templates_dir/docker-compose.yml" "$temp_dir/repo/"
+        print_debug "Copied docker-compose.yml"
+    fi
+
+    # Copy Makefile
+    if [ -f "$templates_dir/Makefile" ]; then
+        cp "$templates_dir/Makefile" "$temp_dir/repo/"
+        print_debug "Copied Makefile"
+    fi
+
+    # Create scripts directory and copy install-ubuntu-deps.sh
+    mkdir -p "$temp_dir/repo/scripts"
+    if [ -f "$templates_dir/scripts/install-ubuntu-deps.sh" ]; then
+        cp "$templates_dir/scripts/install-ubuntu-deps.sh" "$temp_dir/repo/scripts/"
+        chmod +x "$temp_dir/repo/scripts/install-ubuntu-deps.sh"
+        print_debug "Copied scripts/install-ubuntu-deps.sh"
+    fi
+}
+
 # Create initial files
 create_initial_files() {
     # Check if default branch already exists
@@ -242,15 +278,16 @@ create_initial_files() {
     # Create default branch if needed
     git checkout -b "$DEFAULT_BRANCH" 2>/dev/null || git checkout "$DEFAULT_BRANCH"
 
-    # Create empty README.md
+    # Create empty README.md and .gitignore
     touch README.md
-
-    # Create empty .gitignore
     touch .gitignore
 
-    # Commit initial files
-    git add README.md .gitignore
-    git commit -m "Initial commit"
+    # Copy infrastructure files
+    copy_infrastructure_files "$temp_dir"
+
+    # Commit all files
+    git add .
+    git commit -m "Initial commit with infrastructure setup"
 
     # Push to remote (gh authentication is already configured)
     git push -u origin "$DEFAULT_BRANCH"
@@ -259,7 +296,7 @@ create_initial_files() {
     cd - > /dev/null || exit 1
     rm -rf "$temp_dir"
 
-    print_debug "Initial files created and pushed"
+    print_debug "Initial infrastructure files created and pushed"
 }
 
 # Configure repository settings
