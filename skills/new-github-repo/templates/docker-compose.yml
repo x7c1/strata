@@ -10,9 +10,9 @@ services:
       - ~/.claude/CLAUDE.md:/home/developer/.claude/CLAUDE.md
       - ~/.claude/.credentials.json:/home/developer/.claude/.credentials.json
       - ~/.config/git:/home/developer/.config/git
+      - ~/.config/gh:/home/developer/.config/gh
       - ~/.ssh:/home/developer/.ssh:ro
       - ./claude.local/shared/.npm-global:/home/developer/.npm-global
-      - ./claude.local/shared/.config/gh:/home/developer/.config/gh
       - ./claude.local/shared/.local:/home/developer/.local
     stdin_open: true
     tty: true
