@@ -250,12 +250,33 @@ copy_infrastructure_files() {
         print_debug "Copied Makefile"
     fi
 
-    # Create scripts directory and copy install-ubuntu-deps.sh
+    # Copy .gitignore
+    if [ -f "$templates_dir/.gitignore" ]; then
+        cp "$templates_dir/.gitignore" "$temp_dir/repo/"
+        print_debug "Copied .gitignore"
+    fi
+
+    # Create scripts directory and copy all scripts
     mkdir -p "$temp_dir/repo/scripts"
     if [ -f "$templates_dir/scripts/install-ubuntu-deps.sh" ]; then
         cp "$templates_dir/scripts/install-ubuntu-deps.sh" "$temp_dir/repo/scripts/"
         chmod +x "$temp_dir/repo/scripts/install-ubuntu-deps.sh"
         print_debug "Copied scripts/install-ubuntu-deps.sh"
+    fi
+    if [ -f "$templates_dir/scripts/setup-claude-container.sh" ]; then
+        cp "$templates_dir/scripts/setup-claude-container.sh" "$temp_dir/repo/scripts/"
+        chmod +x "$temp_dir/repo/scripts/setup-claude-container.sh"
+        print_debug "Copied scripts/setup-claude-container.sh"
+    fi
+    if [ -f "$templates_dir/scripts/setup-claude-role.sh" ]; then
+        cp "$templates_dir/scripts/setup-claude-role.sh" "$temp_dir/repo/scripts/"
+        chmod +x "$temp_dir/repo/scripts/setup-claude-role.sh"
+        print_debug "Copied scripts/setup-claude-role.sh"
+    fi
+    if [ -f "$templates_dir/scripts/start-claude-code.sh" ]; then
+        cp "$templates_dir/scripts/start-claude-code.sh" "$temp_dir/repo/scripts/"
+        chmod +x "$temp_dir/repo/scripts/start-claude-code.sh"
+        print_debug "Copied scripts/start-claude-code.sh"
     fi
 }
 
