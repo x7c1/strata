@@ -17,4 +17,4 @@ services:
     stdin_open: true
     tty: true
     working_dir: /projects/${ROLE}
-    command: bash -c "/projects/${ROLE}/vendor/strata/scripts/start-claude-code.sh; exec bash"
+    command: bash -c "/projects/${ROLE}/scripts/start-claude-code.sh; exec bash"
