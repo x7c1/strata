@@ -47,8 +47,8 @@ RUN rustup component add clippy rustfmt
 
 # Set up npm user-level directory
 RUN mkdir -p /home/developer/.npm-global
-
 RUN mkdir -p /home/developer/.local
+RUN mkdir -p /home/developer/.config
 
 # Set up shell environment with npm user prefix
 ENV NPM_CONFIG_PREFIX=/home/developer/.npm-global
