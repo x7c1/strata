@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Script to setup Claude container environment
-# Usage: ./scripts/setup-claude-container.sh
 
 set -e
 
