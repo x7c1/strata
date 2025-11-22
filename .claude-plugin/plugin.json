@@ -1,0 +1,13 @@
+{
+  "name": "strata",
+  "description": "Shared shell scripts, commands, and skills for development workflows",
+  "version": "1.0.0",
+  "author": {
+    "name": "x7c1",
+    "email": ""
+  },
+  "homepage": "https://github.com/x7c1/strata",
+  "repository": "https://github.com/x7c1/strata",
+  "license": "MIT",
+  "keywords": ["skills", "scripts", "git", "pr", "workflow", "automation"]
+}
