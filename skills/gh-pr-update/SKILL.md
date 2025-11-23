@@ -26,6 +26,32 @@ Update PR:
 bash update-pr.sh <pr_number> <title> <description> [labels]
 ```
 
+## Description Format
+
+Generate PR descriptions in this format:
+
+```markdown
+## New Features
+- [ ] Feature description
+- [ ] Another feature
+
+## Bug Fixes
+- [ ] Bug fix description
+
+## Refactoring
+- Refactoring description
+
+## Breaking Changes
+- Breaking change description
+```
+
+**Rules:**
+- Use checkboxes (`- [ ]`) for New Features and Bug Fixes
+- Use regular bullets (`-`) for Refactoring and Breaking Changes
+- Skip sections with no items
+- Keep descriptions concise and casual
+- Extract info from commit messages to categorize changes
+
 ## Notes
 
 - Title must not exceed 60 characters
