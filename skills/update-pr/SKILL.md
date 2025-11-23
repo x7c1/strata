@@ -9,10 +9,10 @@ Identifies the current branch's pull request and updates its title and descripti
 
 ## Instructions
 
-1. Use get-current-branch-pr.sh to find PR number for current branch
-2. Analyze commit history to understand changes
-3. Generate appropriate title (max 60 characters) and description
-4. Use update-pr.sh to update the PR
+- Use get-current-branch-pr.sh to find PR number for current branch
+- Analyze commit history to understand changes
+- Generate appropriate title (max 60 characters) and description
+- Use update-pr.sh to update the PR
 
 ## Usage
 
