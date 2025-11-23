@@ -2,4 +2,4 @@
 description: Create new GitHub repository with infrastructure files
 ---
 
-Use the new-github-repo skill exactly as written
+Use the gh-repo-create skill exactly as written

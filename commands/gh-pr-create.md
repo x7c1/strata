@@ -2,4 +2,4 @@
 description: Create draft pull request with automatic title
 ---
 
-Use the create-pr skill exactly as written
+Use the gh-pr-create skill exactly as written
