@@ -9,11 +9,11 @@ Creates a draft pull request for the current branch with title derived from the 
 
 ## Instructions
 
-1. Verify not on main branch
-2. Check for uncommitted changes
-3. Push current branch to remote
-4. Get first commit date from branch history
-5. Create draft PR with title "since YYYY-MM-DD"
+- Verify not on main branch
+- Check for uncommitted changes
+- Push current branch to remote
+- Get first commit date from branch history
+- Create draft PR with title "since YYYY-MM-DD"
 
 ## Usage
 
