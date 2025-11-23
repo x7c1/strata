@@ -1,5 +1,5 @@
 ---
-name: new-github-repo
+name: gh-repo-create
 description: Create new GitHub repository with infrastructure setup and configuration
 ---
 
@@ -9,22 +9,15 @@ Creates a new GitHub repository with predefined settings, branch protection rule
 
 ## Instructions
 
-1. Create YAML configuration file with repository settings
-2. Before running the script, prepare Dockerfile from template:
-   - Check latest Rust version: https://hub.docker.com/_/rust
-   - Check latest Node.js LTS version: https://nodejs.org/
-   - Copy templates/Dockerfile.template and replace placeholders:
-     - Replace `<RUST_VERSION>` with latest stable version (e.g., 1.83)
-     - Replace `<NODEJS_VERSION>` with latest LTS version (e.g., 22)
-   - Save as Dockerfile (temporary file for this execution)
-3. Run new-github-repo.sh with configuration file path
-4. Script will:
-   - Create GitHub repository
-   - Copy infrastructure files (Dockerfile, docker-compose.yml, Makefile)
-   - Copy scripts/install-ubuntu-deps.sh
-   - Create initial commit with all files
-   - Configure repository settings
-   - Apply branch protection rules
+- Create YAML configuration file with repository settings
+- Before running the script, prepare Dockerfile from template:
+  - Check latest Rust version: https://hub.docker.com/_/rust
+  - Check latest Node.js LTS version: https://nodejs.org/
+  - Copy templates/Dockerfile.template and replace placeholders:
+    - Replace `<RUST_VERSION>` with latest stable version (e.g., 1.83)
+    - Replace `<NODEJS_VERSION>` with latest LTS version (e.g., 22)
+  - Save as Dockerfile (temporary file for this execution)
+- Run new-github-repo.sh with configuration file path
 
 ## Usage
 
@@ -65,5 +58,6 @@ The skill includes the following templates:
 
 - Requires GitHub CLI (gh) to be installed and authenticated
 - Requires yq for YAML parsing
-- Templates assume vendor/strata submodule will be added to the repository
-- Repository created with initial commit containing infrastructure files
+- Automatically adds x7c1/strata as git submodule at vendor/strata
+- Repository created with initial commit containing infrastructure files and submodule
+- Submodule requires SSH access to git@github.com:x7c1/strata.git

@@ -280,6 +280,32 @@ copy_infrastructure_files() {
     fi
 }
 
+# Add strata submodule to repository
+add_submodule() {
+    local submodule_repo="git@github.com:x7c1/strata.git"
+    local submodule_path="vendor/strata"
+
+    print_debug "Adding strata submodule at $submodule_path"
+
+    # Add submodule
+    if ! git submodule add "$submodule_repo" "$submodule_path" 2>&1; then
+        print_error "Failed to add submodule from $submodule_repo"
+        return 1
+    fi
+
+    print_debug "Submodule added successfully"
+
+    # Initialize and update submodule
+    if ! git submodule update --init "$submodule_path" 2>&1; then
+        print_error "Failed to initialize submodule at $submodule_path"
+        return 1
+    fi
+
+    print_debug "Submodule initialized successfully"
+
+    return 0
+}
+
 # Create initial files
 create_initial_files() {
     # Check if default branch already exists
@@ -305,6 +331,9 @@ create_initial_files() {
 
     # Copy infrastructure files
     copy_infrastructure_files "$temp_dir"
+
+    # Add strata submodule
+    add_submodule
 
     # Commit all files
     git add .

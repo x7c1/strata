@@ -5,25 +5,24 @@ description: Format staged files and create git commit with conventional commit 
 
 # Git Commit Skill
 
-Analyzes staged changes and automatically creates a git commit with a properly formatted conventional commit message.
+Analyzes staged changes and creates a git commit with a properly formatted conventional commit message.
 
 ## Instructions
 
-1. Run format-staged-files.sh to format staged files:
-   - Removes trailing whitespace from text files (except markdown)
-   - Ensures files end with newline characters
-   - Re-stages modified files
-2. Analyze git diff --cached to understand changes
-3. Generate conventional commit message (type(scope): description)
-4. Execute git commit
+- Analyze staged changes using git diff --cached
+- Determine commit type (feat, fix, refactor, docs, test, chore, etc.)
+- Extract scope from file paths if applicable
+- Generate conventional commit message (type(scope): description)
+- Use git-commit.sh to create the commit
 
 ## Usage
 
 ```bash
-bash format-staged-files.sh
+bash git-commit.sh "feat(auth): add login functionality"
 ```
 
 The script will:
-- Process all staged files
-- Update formatting as needed
-- Report modified files
+- Format staged files automatically
+- Validate git repository and staged changes
+- Create commit with provided message
+- Display commit hash and summary
