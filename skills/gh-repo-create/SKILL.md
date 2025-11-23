@@ -1,5 +1,5 @@
 ---
-name: new-github-repo
+name: gh-repo-create
 description: Create new GitHub repository with infrastructure setup and configuration
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: update-pr
+name: gh-pr-update
 description: Update current branch's pull request title and description based on commit history
 ---
 
