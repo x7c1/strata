@@ -9,7 +9,7 @@ Analyzes staged changes and creates a git commit with a properly formatted conve
 
 ## Instructions
 
-- Analyze staged changes using git diff --cached
+- Analyze staged changes using analyze-staged-changes.sh
 - Determine commit type (feat, fix, refactor, docs, test, chore, etc.)
 - Extract scope from file paths if applicable
 - Generate conventional commit message (type(scope): description)
