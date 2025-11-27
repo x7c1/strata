@@ -13,6 +13,7 @@ Analyzes staged changes and creates a git commit with a properly formatted conve
 - Determine commit type (feat, fix, refactor, docs, test, chore, etc.)
 - Extract scope from file paths if applicable
 - Generate conventional commit message (type(scope): description)
+- Keep commit message on a single line
 - Use git-commit.sh to create the commit
 
 ## Usage
@@ -26,3 +27,4 @@ The script will:
 - Validate git repository and staged changes
 - Create commit with provided message
 - Display commit hash and summary
+
