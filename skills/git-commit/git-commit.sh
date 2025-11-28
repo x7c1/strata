@@ -79,6 +79,12 @@ EOF
 validate_commit_message() {
     local commit_msg="$1"
 
+    # Check if commit message contains newlines (embedded in the string itself)
+    if [[ "$commit_msg" == *$'\n'* ]]; then
+        print_error "Commit message must be on a single line"
+        exit 1
+    fi
+
     local forbidden_patterns=(
         "Files Added"
         "Files Modified"
