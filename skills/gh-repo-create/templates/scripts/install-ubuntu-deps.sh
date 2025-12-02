@@ -12,6 +12,7 @@ sudo apt-get install -y \
     pkg-config \
     libssl-dev \
     yq \
-    jq
+    jq \
+    tree
 
 echo "Common Ubuntu dependencies installed successfully!"

@@ -1,0 +1,11 @@
+# Strata
+
+Development automation tools and scripts.
+
+## Usage (Claude Code)
+
+Install as a plugin and invoke skills with `/strata:` prefix.
+
+## License
+
+MIT
