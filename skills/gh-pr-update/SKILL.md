@@ -11,8 +11,9 @@ Identifies the current branch's pull request and updates its title and descripti
 
 - Use get-current-branch-pr.sh to find PR number for current branch
 - Analyze commit history to understand changes
-- Generate appropriate title (max 60 characters) and description
-- Use update-pr.sh to update the PR
+- Generate title and description following the Description Format and Constraints sections below
+- Determine appropriate labels following the Labels section below
+- Use update-pr.sh to update the PR with title, description, and labels
 
 ## Usage
 
@@ -52,7 +53,14 @@ Generate PR descriptions in this format:
 - Keep descriptions concise and casual
 - Extract info from commit messages to categorize changes
 
-## Notes
+## Labels
+
+Choose appropriate labels based on the type of changes:
+- `enhancement` - New features or improvements
+- `bug` - Bug fixes
+- `documentation` - Documentation changes
+
+## Constraints
 
 - Title must not exceed 60 characters
 - Description must not contain "Files Added", "Files Modified", "Generated with" sections
