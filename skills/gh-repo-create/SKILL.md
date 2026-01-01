@@ -1,5 +1,5 @@
 ---
-name: gh-repo-create
+name: strata-gh-repo-create
 description: Create new GitHub repository with infrastructure setup and configuration
 ---
 
