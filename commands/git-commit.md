@@ -2,4 +2,4 @@
 description: Format staged files and create conventional commit
 ---
 
-Use the git-commit skill exactly as written
+Use the "strata-git-commit" skill exactly as written
