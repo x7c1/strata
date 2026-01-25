@@ -1,5 +1,5 @@
 ---
-name: strata-git-commit
+name: ai-git-commit
 description: Format staged files and create git commit with conventional commit message
 ---
 

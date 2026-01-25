@@ -1,5 +1,5 @@
 ---
-name: strata-gh-pr-update
+name: ai-gh-pr-update
 description: Update current branch's pull request title and description based on commit history
 ---
 

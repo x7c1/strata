@@ -1,5 +1,5 @@
 ---
-name: strata-gh-pr-create
+name: ai-gh-pr-create
 description: Create draft pull request from current branch with automatic title based on first commit date
 ---
 
