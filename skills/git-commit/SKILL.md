@@ -1,6 +1,8 @@
 ---
-name: ai-git-commit
+name: git-commit
 description: Format staged files and create git commit with conventional commit message
+context: fork
+disable-model-invocation: true
 ---
 
 # Git Commit Skill
