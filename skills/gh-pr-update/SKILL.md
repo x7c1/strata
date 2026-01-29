@@ -1,6 +1,8 @@
 ---
-name: ai-gh-pr-update
+name: gh-pr-update
 description: Update current branch's pull request title and description based on commit history
+context: fork
+disable-model-invocation: true
 ---
 
 # Update PR Skill
