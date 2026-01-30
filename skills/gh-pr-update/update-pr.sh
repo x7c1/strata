@@ -1,14 +1,38 @@
 #!/bin/bash
 # scripts/update-pr.sh
 
-pr_number="$1"
-title="$2"
-description="$3"
-labels="$4"  # optional
+json_file="$1"
 
-# Check required arguments
-if [ -z "$pr_number" ] || [ -z "$title" ] || [ -z "$description" ]; then
-    echo "Usage: $0 <pr_number> <title> <description> [labels]"
+# Check required argument
+if [ -z "$json_file" ]; then
+    echo "Usage: $0 <json_file>"
+    exit 1
+fi
+
+if [ ! -f "$json_file" ]; then
+    echo "Error: File not found: $json_file"
+    exit 1
+fi
+
+# Parse JSON
+pr_number=$(jq -r '.pr_number' "$json_file")
+title=$(jq -r '.title' "$json_file")
+description=$(jq -r '.description' "$json_file")
+labels=$(jq -r '.labels // [] | join(",")' "$json_file")
+
+# Validate required fields
+if [ -z "$pr_number" ] || [ "$pr_number" = "null" ]; then
+    echo "Error: pr_number is required"
+    exit 1
+fi
+
+if [ -z "$title" ] || [ "$title" = "null" ]; then
+    echo "Error: title is required"
+    exit 1
+fi
+
+if [ -z "$description" ] || [ "$description" = "null" ]; then
+    echo "Error: description is required"
     exit 1
 fi
 
