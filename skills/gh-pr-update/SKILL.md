@@ -1,7 +1,6 @@
 ---
 description: Update current branch's pull request title and description based on commit history
 context: fork
-disable-model-invocation: true
 ---
 
 # Update PR Skill
@@ -14,7 +13,8 @@ Identifies the current branch's pull request and updates its title and descripti
 - Analyze commit history to understand changes
 - Generate title and description following the Title Format, Description Format, and Constraints sections below
 - Determine appropriate labels following the Labels section below
-- Use update-pr.sh to update the PR with title, description, and labels
+- Create a JSON file with pr_number, title, description, and labels
+- Use update-pr.sh with the JSON file path to update the PR
 
 ## Usage
 
@@ -25,8 +25,24 @@ bash get-current-branch-pr.sh
 
 Update PR:
 ```bash
-bash update-pr.sh <pr_number> <title> <description> [labels]
+bash update-pr.sh <json_file>
 ```
+
+JSON file format:
+```json
+{
+  "pr_number": 28,
+  "title": "feat(ci): improve release PR workflow",
+  "description": "## New Features\n- [ ] Add feature...",
+  "labels": ["enhancement"]
+}
+```
+
+**Fields:**
+- `pr_number` (required): PR number to update
+- `title` (required): PR title
+- `description` (required): PR body in markdown
+- `labels` (optional): Array of label names to add
 
 ## Title Format
 

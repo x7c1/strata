@@ -1,6 +1,5 @@
 ---
 description: Start planning process for new features, bug fixes, refactoring, or structural changes
-disable-model-invocation: true
 ---
 
 # New Issue Planning Skill

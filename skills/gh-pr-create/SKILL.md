@@ -1,7 +1,6 @@
 ---
 description: Create draft pull request from current branch with automatic title based on first commit date
 context: fork
-disable-model-invocation: true
 ---
 
 # Create PR Skill
