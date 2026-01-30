@@ -1,7 +1,6 @@
 ---
 description: Create new GitHub repository with infrastructure setup and configuration
 context: fork
-disable-model-invocation: true
 ---
 
 # New GitHub Repository Skill
