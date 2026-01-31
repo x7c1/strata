@@ -54,8 +54,8 @@ if [[ -n "$COMMIT_MSG" ]]; then
     done
 fi
 
-# Provide commit message rules
-cat << 'EOF'
+# Provide commit message rules as additionalContext
+RULES=$(cat << 'RULES_EOF'
 ## Commit Message Rules
 
 Format: `type(scope): description`
@@ -64,6 +64,9 @@ Types: feat, fix, docs, refactor, test, chore
 - Keep message on a single line
 - Be concise but descriptive
 - Use English only
-EOF
+RULES_EOF
+)
+
+jq -n --arg context "$RULES" '{"additionalContext": $context}'
 
 exit 0

@@ -24,24 +24,32 @@ main() {
     exit 0
 }
 
+output_json() {
+    local context="$1"
+    jq -n --arg context "$context" '{"additionalContext": $context}'
+}
+
 print_update_rules() {
-    cat << 'EOF'
+    local rules
+    rules=$(cat << EOF
 ## PR Update Rules
 
 ### IMPORTANT: Handle Checked Items Carefully
 Before updating, ALWAYS read the current PR description first:
-```
+\`\`\`
 gh pr view <number> --json body -q '.body'
-```
+\`\`\`
 
-- `[x]` (checked): Preserve as-is, unless the content changed in recent commits
-- If content changed: Update the text AND uncheck it (`[x]` → `[ ]`) for human re-verification
+- \`[x]\` (checked): Preserve as-is, unless the content changed in recent commits
+- If content changed: Update the text AND uncheck it (\`[x]\` → \`[ ]\`) for human re-verification
 - Only update if there are actual changes to add
 
+$(print_full_template)
+
+$(print_labels_rules)
 EOF
-    print_full_template
-    echo ""
-    print_labels_rules
+)
+    output_json "$rules"
 }
 
 main
