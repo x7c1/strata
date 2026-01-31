@@ -2,7 +2,7 @@
 description: Start planning process for new features, bug fixes, refactoring, or structural changes
 ---
 
-# New Issue Planning Skill
+# New Plan Skill
 
 Initiates the planning process for any development task including new features, bug fixes, refactoring, or structural changes.
 
@@ -10,7 +10,7 @@ Initiates the planning process for any development task including new features, 
 
 - Conduct requirements interview to understand the task
 - Determine appropriate directory name with sequential numbering
-- Create project directory structure in `docs/issues/{year}/{number}-{descriptive-name}/`
+- Create project directory structure in `docs/plans/{year}/{number}-{descriptive-name}/`
 - Create initial draft of planning document (`plan.md`)
 - Present drafts to user for review and feedback
 - Make requested modifications to the documents
