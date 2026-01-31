@@ -13,7 +13,7 @@ INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 # Only process git commit commands
-if ! echo "$COMMAND" | grep -qE '^git commit'; then
+if ! echo "$COMMAND" | grep -qE '\bgit commit\b'; then
     exit 0
 fi
 
