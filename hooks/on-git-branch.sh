@@ -4,10 +4,17 @@
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
-# Check if this is a branch creation command
-if echo "$COMMAND" | grep -qE 'git (checkout -b|branch|switch -c)'; then
-  # Extract branch name from command
-  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*git (checkout -b|branch|switch -c) +([^ ]+).*/\2/')
+# Check if this is a branch creation command (exclude -d, -D, -m, -M, --list, etc.)
+if echo "$COMMAND" | grep -qE 'git (checkout -b|switch -c)'; then
+  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*git (checkout -b|switch -c) +([^ ]+).*/\2/')
+elif echo "$COMMAND" | grep -qE 'git branch [^-]'; then
+  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*git branch +([^-][^ ]*).*/\1/')
+else
+  exit 0
+fi
+
+# Validate branch name
+if [[ -n "$BRANCH_NAME" ]]; then
 
   # Pattern 1: Exploratory work (YYYY-MM-DD_HHMM)
   PATTERN_EXPLORATORY='^[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{4}$'
@@ -19,7 +26,7 @@ if echo "$COMMAND" | grep -qE 'git (checkout -b|branch|switch -c)'; then
     exit 0
   fi
 
-  cat << EOF
+  cat << EOF >&2
 ERROR: Branch name '$BRANCH_NAME' does not match required patterns.
 
 ## Branch Naming Rules
@@ -36,7 +43,7 @@ Choose the appropriate format based on your situation:
      - \`plan/2026-1-add-dark-mode\`
      - \`plan/2026-12-refactor-auth\`
 EOF
-  exit 1
+  exit 2
 fi
 
 exit 0

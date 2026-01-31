@@ -40,11 +40,23 @@ get_first_commit_date() {
     git log main..HEAD --reverse --format="%ad" --date=format:"%Y-%m-%d" 2>/dev/null | head -n 1
 }
 
+output_json() {
+    local context="$1"
+    jq -n --arg context "$context" '{
+      "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "allow",
+        "additionalContext": $context
+      }
+    }'
+}
+
 print_exploratory_rules() {
     local first_date
     first_date=$(get_first_commit_date)
 
-    cat << EOF
+    local rules
+    rules=$(cat << EOF
 ## PR Creation Rules (Exploratory Branch)
 
 This is an exploratory branch. Create a minimal draft PR:
@@ -58,15 +70,22 @@ Example:
 gh pr create --title "since ${first_date:-YYYY-MM-DD}" --body "" --draft
 \`\`\`
 EOF
+)
+    output_json "$rules"
 }
 
 print_standard_create_rules() {
-    echo "## PR Creation Rules (Standard Branch)"
-    echo ""
-    print_full_template
-    echo ""
-    echo "### Options"
-    echo "Always use: --draft"
+    local rules
+    rules=$(cat << EOF
+## PR Creation Rules (Standard Branch)
+
+$(print_full_template)
+
+### Options
+Always use: --draft
+EOF
+)
+    output_json "$rules"
 }
 
 main
