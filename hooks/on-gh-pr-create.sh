@@ -81,6 +81,8 @@ print_standard_create_rules() {
 
 $(print_full_template)
 
+$(print_labels_rules)
+
 ### Options
 Always use: --draft
 EOF
