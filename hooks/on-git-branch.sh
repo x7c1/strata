@@ -5,10 +5,11 @@ INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 # Check if this is a branch creation command (exclude -d, -D, -m, -M, --list, etc.)
-if echo "$COMMAND" | grep -qE 'git (checkout -b|switch -c)'; then
-  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*git (checkout -b|switch -c) +([^ ]+).*/\2/')
-elif echo "$COMMAND" | grep -qE 'git branch [^-]'; then
-  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*git branch +([^-][^ ]*).*/\1/')
+# Patterns allow git options (like -C) between git and the subcommand
+if echo "$COMMAND" | grep -qE 'git\b.*\b(checkout -b|switch -c)'; then
+  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*\b(checkout -b|switch -c) +([^ ]+).*/\2/')
+elif echo "$COMMAND" | grep -qE 'git\b.*\bbranch [^-]'; then
+  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*\bbranch +([^-][^ ]*).*/\1/')
 else
   exit 0
 fi
