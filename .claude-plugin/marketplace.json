@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "strata",
-      "description": "Shared shell scripts, commands, and skills for development workflows",
+      "description": "Shared skills, hooks, and shell scripts for development workflows",
       "version": "1.0.0",
       "source": "./",
       "author": {
