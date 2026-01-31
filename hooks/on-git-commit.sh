@@ -67,6 +67,12 @@ Types: feat, fix, docs, refactor, test, chore
 RULES_EOF
 )
 
-jq -n --arg context "$RULES" '{"additionalContext": $context}'
+jq -n --arg context "$RULES" '{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "allow",
+    "additionalContext": $context
+  }
+}'
 
 exit 0

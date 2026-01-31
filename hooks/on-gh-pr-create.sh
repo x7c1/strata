@@ -42,7 +42,13 @@ get_first_commit_date() {
 
 output_json() {
     local context="$1"
-    jq -n --arg context "$context" '{"additionalContext": $context}'
+    jq -n --arg context "$context" '{
+      "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "allow",
+        "additionalContext": $context
+      }
+    }'
 }
 
 print_exploratory_rules() {
