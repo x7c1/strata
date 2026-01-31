@@ -9,6 +9,5 @@
   "homepage": "https://github.com/x7c1/strata",
   "repository": "https://github.com/x7c1/strata",
   "license": "MIT",
-  "keywords": ["skills", "hooks", "git", "pr", "workflow", "automation"],
-  "hooks": "./hooks/hooks.json"
+  "keywords": ["skills", "hooks", "git", "pr", "workflow", "automation"]
 }
