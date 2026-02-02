@@ -127,11 +127,19 @@ else
     ((++FAIL))
 fi
 
-if echo "$output" | grep -q "Related:"; then
-    echo -e "${GREEN}PASS${NC}: Related plan section contains 'Related:' marker"
+if echo "$output" | grep -q "## Related"; then
+    echo -e "${GREEN}PASS${NC}: Related plan section contains '## Related' header"
     ((++PASS))
 else
-    echo -e "${RED}FAIL${NC}: Related plan section missing 'Related:' marker"
+    echo -e "${RED}FAIL${NC}: Related plan section missing '## Related' header"
+    ((++FAIL))
+fi
+
+if echo "$output" | grep -q "docs/plans/2026/17-subscription-licensing/"; then
+    echo -e "${GREEN}PASS${NC}: Related plan section contains correct plan link"
+    ((++PASS))
+else
+    echo -e "${RED}FAIL${NC}: Related plan section missing plan link"
     ((++FAIL))
 fi
 
