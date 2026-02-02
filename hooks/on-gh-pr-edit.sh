@@ -22,6 +22,13 @@ main() {
 
     branch_name=$(git branch --show-current 2>/dev/null || echo "")
 
+    # Validate body format if --body is present
+    # Note: exploratory branches start with empty body on creation,
+    # but updates should follow the standard format based on commits
+    if echo "$command" | grep -qE -- '--body'; then
+        validate_pr_body_format "$command"
+    fi
+
     if is_implementation_branch "$branch_name"; then
         print_implementation_update_rules "$branch_name"
     else

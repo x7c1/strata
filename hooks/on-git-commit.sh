@@ -25,10 +25,8 @@ if echo "$COMMAND" | grep -qE -- '-m\s'; then
     COMMIT_MSG=$(echo "$COMMAND" | sed -E 's/.*-m\s*["\x27]([^"\x27]*)["\x27].*/\1/' || true)
 fi
 
-# Run formatting on staged files
-echo "## Auto-formatting staged files"
+# Run formatting on staged files (silently)
 bash "$SCRIPT_DIR/format-staged-files.sh" 2>/dev/null || true
-echo ""
 
 # Validate commit message if present
 if [[ -n "$COMMIT_MSG" ]]; then

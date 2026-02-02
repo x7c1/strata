@@ -105,3 +105,107 @@ print_full_template() {
     echo ""
     print_forbidden_patterns
 }
+
+# Validation functions
+
+extract_body_from_command() {
+    local command="$1"
+    # Extract body content from --body "..." or --body '...'
+    # Handle HEREDOC style: --body "$(cat <<'EOF' ... EOF)"
+    if echo "$command" | grep -qE -- '--body\s+"?\$\(cat'; then
+        # HEREDOC style - extract content between the markers
+        echo "$command" | sed -E 's/.*--body\s+"?\$\(cat <<['\''"]?EOF['\''"]?//' | sed -E 's/EOF\s*\)\"?.*//'
+    elif echo "$command" | grep -qE -- '--body\s+""'; then
+        # Empty body
+        echo ""
+    else
+        # Simple --body "content" style
+        echo "$command" | sed -E 's/.*--body\s+["\x27]([^"\x27]*)["\x27].*/\1/' || echo ""
+    fi
+}
+
+validate_exploratory_pr() {
+    local command="$1"
+    local body
+    body=$(extract_body_from_command "$command")
+
+    # Exploratory PRs must have empty body
+    if [[ -n "$body" && "$body" != "$command" ]]; then
+        cat >&2 << 'EOF'
+ERROR: Exploratory branch PRs must have an empty body.
+
+Use: gh pr create --title "since YYYY-MM-DD" --body "" --draft
+EOF
+        exit 2
+    fi
+}
+
+validate_pr_body_format() {
+    local command="$1"
+    local body
+    body=$(extract_body_from_command "$command")
+
+    # Check if body extraction failed (returns original command) or no --body flag
+    if [[ "$body" == "$command" ]]; then
+        return 0  # Cannot validate, allow
+    fi
+
+    # Empty body is not allowed for non-exploratory PRs
+    if [[ -z "$body" ]]; then
+        cat >&2 << 'EOF'
+ERROR: PR body is required.
+
+Required sections (include at least one):
+- ## New Features
+- ## Bug Fixes
+- ## Refactoring
+- ## Breaking Changes
+EOF
+        exit 2
+    fi
+
+    # Check for valid section headers
+    local valid_sections="## New Features|## Bug Fixes|## Refactoring|## Breaking Changes"
+    if ! echo "$body" | grep -qE "$valid_sections"; then
+        cat >&2 << 'EOF'
+ERROR: PR body must contain at least one valid section header.
+
+Required format:
+## New Features
+- [ ] Feature description
+
+## Bug Fixes
+- [ ] Bug fix description
+
+## Refactoring
+- Refactoring description
+
+## Breaking Changes
+- Breaking change description
+
+Do NOT use: ## Summary, ## Test plan, or other custom headers.
+EOF
+        exit 2
+    fi
+
+    # Check for forbidden patterns
+    local forbidden_patterns=("Summary" "Test plan" "Files Added" "Files Modified" "Files Changed" "Generated with")
+    for pattern in "${forbidden_patterns[@]}"; do
+        if echo "$body" | grep -qi "## $pattern"; then
+            cat >&2 << EOF
+ERROR: PR body contains forbidden section header: "## $pattern"
+
+Use the required sections instead:
+- ## New Features
+- ## Bug Fixes
+- ## Refactoring
+- ## Breaking Changes
+EOF
+            exit 2
+        fi
+        if [[ "$pattern" != "Summary" && "$pattern" != "Test plan" ]] && echo "$body" | grep -qi "$pattern"; then
+            echo "ERROR: PR body contains forbidden pattern: '$pattern'" >&2
+            exit 2
+        fi
+    done
+}
