@@ -8,12 +8,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/command-detect.sh"
 
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 # Only process git commit commands
-if ! echo "$COMMAND" | grep -qE '\bgit commit\b'; then
+if ! is_git_commit "$COMMAND"; then
     exit 0
 fi
 

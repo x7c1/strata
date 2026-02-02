@@ -1,24 +1,18 @@
 #!/bin/bash
 # Hook: Validate branch naming before creating a new branch
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/command-detect.sh"
+
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
-# Early exit for commands that cannot create branches
-# These commands may contain "branch" in arguments (e.g., commit messages)
-if echo "$COMMAND" | grep -qE 'git\b.*\b(commit|push|pull|fetch|merge|rebase|stash|log|diff|show|status|add|rm|mv|reset|revert|cherry-pick|tag|remote|clone)\b'; then
+# Only process branch creation commands
+if ! is_branch_creation "$COMMAND"; then
   exit 0
 fi
 
-# Check if this is a branch creation command (exclude -d, -D, -m, -M, --list, etc.)
-# Patterns allow git options (like -C) between git and the subcommand
-if echo "$COMMAND" | grep -qE 'git\b.*\b(checkout -b|switch -c)'; then
-  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*\b(checkout -b|switch -c) +([^ ]+).*/\2/')
-elif echo "$COMMAND" | grep -qE 'git\b.*\bbranch [^-]'; then
-  BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*\bbranch +([^-][^ ]*).*/\1/')
-else
-  exit 0
-fi
+BRANCH_NAME=$(get_branch_name "$COMMAND")
 
 # Validate branch name
 if [[ -n "$BRANCH_NAME" ]]; then

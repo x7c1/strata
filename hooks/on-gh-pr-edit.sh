@@ -6,6 +6,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/command-detect.sh"
 source "$SCRIPT_DIR/pr-rules.sh"
 
 main() {
@@ -15,7 +16,7 @@ main() {
     command=$(echo "$input" | jq -r '.tool_input.command // empty')
 
     # Only process gh pr edit commands
-    if ! echo "$command" | grep -qE '^gh pr edit'; then
+    if ! is_gh_pr_edit "$command"; then
         exit 0
     fi
 
