@@ -24,11 +24,13 @@ get_plan_identifier() {
 
 print_related_plan_section() {
     local branch="$1"
-    local plan_id year number_and_name
+    local plan_id year number_and_name repo_url
     plan_id=$(get_plan_identifier "$branch")
     # Extract year (first 4 digits) and the rest (e.g., "2026-17-foo" -> "2026" and "17-foo")
     year=$(echo "$plan_id" | cut -d'-' -f1)
     number_and_name=$(echo "$plan_id" | cut -d'-' -f2-)
+    # Get repo URL for absolute links (relative links don't work in PR bodies)
+    repo_url=$(gh repo view --json url -q '.url' 2>/dev/null || echo "https://github.com/OWNER/REPO")
 
     cat << EOF
 ### Related Section
@@ -36,7 +38,7 @@ This branch implements a plan.
 Add at the end of PR body:
 \`\`\`
 ## Related
-- [plan/$plan_id](docs/plans/$year/$number_and_name/)
+- [plan/$plan_id]($repo_url/tree/main/docs/plans/$year/$number_and_name/)
 \`\`\`
 
 EOF
