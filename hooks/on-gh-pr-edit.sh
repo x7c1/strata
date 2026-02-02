@@ -22,6 +22,15 @@ main() {
 
     branch_name=$(git branch --show-current 2>/dev/null || echo "")
 
+    # Validate body format if --body is present
+    if echo "$command" | grep -qE -- '--body'; then
+        if is_exploratory_branch "$branch_name"; then
+            validate_exploratory_pr "$command"
+        else
+            validate_pr_body_format "$command"
+        fi
+    fi
+
     if is_implementation_branch "$branch_name"; then
         print_implementation_update_rules "$branch_name"
     else

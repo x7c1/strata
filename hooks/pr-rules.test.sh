@@ -136,6 +136,87 @@ else
 fi
 
 echo ""
+echo "=== Testing extract_body_from_command ==="
+
+assert_equals "Extract simple body" \
+    "hello world" \
+    "$(extract_body_from_command 'gh pr create --body "hello world" --draft')"
+
+assert_equals "Extract empty body" \
+    "" \
+    "$(extract_body_from_command 'gh pr create --body "" --draft')"
+
+assert_equals "Extract body with ## header" \
+    "## Bug Fixes" \
+    "$(extract_body_from_command 'gh pr create --body "## Bug Fixes" --draft')"
+
+echo ""
+echo "=== Testing validate_exploratory_pr ==="
+
+# Test: empty body should pass
+assert_exit_code() {
+    local description="$1"
+    local expected_code="$2"
+    shift 2
+    local actual_code
+    "$@" >/dev/null 2>&1 && actual_code=0 || actual_code=$?
+    if [[ "$expected_code" == "$actual_code" ]]; then
+        echo -e "${GREEN}PASS${NC}: $description"
+        ((++PASS))
+    else
+        echo -e "${RED}FAIL${NC}: $description (expected exit $expected_code, got $actual_code)"
+        ((++FAIL))
+    fi
+}
+
+run_validate_exploratory() {
+    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
+        source "$SCRIPT_DIR/pr-rules.sh"
+        validate_exploratory_pr "$1"
+    )
+}
+
+run_validate_body_format() {
+    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
+        source "$SCRIPT_DIR/pr-rules.sh"
+        validate_pr_body_format "$1"
+    )
+}
+
+assert_exit_code "Exploratory: empty body passes" 0 \
+    run_validate_exploratory 'gh pr create --body "" --draft'
+
+assert_exit_code "Exploratory: non-empty body fails" 2 \
+    run_validate_exploratory 'gh pr create --body "content" --draft'
+
+echo ""
+echo "=== Testing validate_pr_body_format ==="
+
+assert_exit_code "Valid body with ## Bug Fixes passes" 0 \
+    run_validate_body_format 'gh pr create --body "## Bug Fixes" --draft'
+
+assert_exit_code "Valid body with ## New Features passes" 0 \
+    run_validate_body_format 'gh pr create --body "## New Features" --draft'
+
+assert_exit_code "Valid body with ## Refactoring passes" 0 \
+    run_validate_body_format 'gh pr create --body "## Refactoring" --draft'
+
+assert_exit_code "Valid body with ## Breaking Changes passes" 0 \
+    run_validate_body_format 'gh pr create --body "## Breaking Changes" --draft'
+
+assert_exit_code "Invalid body with ## Summary fails" 2 \
+    run_validate_body_format 'gh pr create --body "## Summary" --draft'
+
+assert_exit_code "Invalid body with ## Test plan fails" 2 \
+    run_validate_body_format 'gh pr create --body "## Test plan" --draft'
+
+assert_exit_code "Empty body fails" 2 \
+    run_validate_body_format 'gh pr create --body "" --draft'
+
+assert_exit_code "Body without valid section fails" 2 \
+    run_validate_body_format 'gh pr create --body "just some text" --draft'
+
+echo ""
 echo "================================"
 echo -e "Results: ${GREEN}$PASS passed${NC}, ${RED}$FAIL failed${NC}"
 

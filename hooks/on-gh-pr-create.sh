@@ -23,10 +23,13 @@ main() {
     branch_name=$(git branch --show-current 2>/dev/null || echo "")
 
     if is_exploratory_branch "$branch_name"; then
+        validate_exploratory_pr "$command"
         print_exploratory_rules
     elif is_implementation_branch "$branch_name"; then
+        validate_pr_body_format "$command"
         print_implementation_rules "$branch_name"
     else
+        validate_pr_body_format "$command"
         print_standard_create_rules
     fi
 
