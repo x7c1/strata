@@ -47,7 +47,7 @@ The branch name is derived from the plan path:
 - **Step 3: Implement**
   - Follow the plan document step by step
   - Implement all required changes
-  - Run build and tests to verify: `npm run build && npm run check && npm run test:run`
+  - Run build and tests to verify (check the project's CLAUDE.md for specific commands)
 
 - **Step 4: Commit**
   - Stage all changes related to the implementation
