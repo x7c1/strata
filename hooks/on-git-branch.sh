@@ -4,6 +4,12 @@
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
+# Early exit for commands that cannot create branches
+# These commands may contain "branch" in arguments (e.g., commit messages)
+if echo "$COMMAND" | grep -qE 'git\b.*\b(commit|push|pull|fetch|merge|rebase|stash|log|diff|show|status|add|rm|mv|reset|revert|cherry-pick|tag|remote|clone)\b'; then
+  exit 0
+fi
+
 # Check if this is a branch creation command (exclude -d, -D, -m, -M, --list, etc.)
 # Patterns allow git options (like -C) between git and the subcommand
 if echo "$COMMAND" | grep -qE 'git\b.*\b(checkout -b|switch -c)'; then
