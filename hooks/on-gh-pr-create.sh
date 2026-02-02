@@ -23,17 +23,13 @@ main() {
 
     if is_exploratory_branch "$branch_name"; then
         print_exploratory_rules
+    elif is_implementation_branch "$branch_name"; then
+        print_implementation_rules "$branch_name"
     else
         print_standard_create_rules
     fi
 
     exit 0
-}
-
-is_exploratory_branch() {
-    local branch="$1"
-    # Match YYYY-MM-DD_HHMM format
-    [[ "$branch" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{4}$ ]]
 }
 
 get_first_commit_date() {
@@ -69,6 +65,25 @@ Example:
 \`\`\`
 gh pr create --title "since ${first_date:-YYYY-MM-DD}" --body "" --draft
 \`\`\`
+EOF
+)
+    output_json "$rules"
+}
+
+print_implementation_rules() {
+    local branch="$1"
+
+    local rules
+    rules=$(cat << EOF
+## PR Creation Rules (Implementation Branch)
+
+$(print_related_plan_section "$branch")
+$(print_full_template)
+
+$(print_labels_rules)
+
+### Options
+Always use: --draft
 EOF
 )
     output_json "$rules"
