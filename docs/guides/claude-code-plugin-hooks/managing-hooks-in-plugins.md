@@ -102,8 +102,61 @@ You can host all plugins in a single repository while allowing selective install
 Users can then selectively install only the plugins they need:
 
 ```bash
-claude plugin install security-hooks@company-marketplace
-claude plugin install formatting-hooks@company-marketplace
+# Add the marketplace first
+claude plugin marketplace add company-org/company-plugins
+
+# Then install specific plugins
+claude plugin install security-hooks@company-plugins
+claude plugin install formatting-hooks@company-plugins
+```
+
+### Private Repository Support
+
+Claude Code supports installing plugins from **private repositories**. This is essential for organizations that cannot expose internal tooling publicly.
+
+#### Authentication Methods
+
+| Use Case | Authentication Method |
+|----------|----------------------|
+| Manual install/update | Existing git credential helpers (`gh auth login`, SSH keys, etc.) |
+| Background auto-updates | Environment variables with tokens |
+
+If `git clone` works for a private repository in your terminal, it works in Claude Code too.
+
+#### Environment Variables for Auto-Updates
+
+For background auto-updates to work with private repositories, set the appropriate token:
+
+| Provider | Environment Variable |
+|----------|---------------------|
+| GitHub | `GITHUB_TOKEN` or `GH_TOKEN` |
+| GitLab | `GITLAB_TOKEN` or `GL_TOKEN` |
+| Bitbucket | `BITBUCKET_TOKEN` |
+
+```bash
+# Add to your shell configuration (.bashrc, .zshrc, etc.)
+export GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+```
+
+**Token Requirements:**
+- GitHub: `repo` scope for private repositories
+- GitLab: `read_repository` scope
+
+#### Team-Wide Configuration
+
+You can configure automatic marketplace installation for your team by adding to `.claude/settings.json` in your project:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "company-tools": {
+      "source": {
+        "source": "github",
+        "repo": "your-org/claude-plugins"
+      }
+    }
+  }
+}
 ```
 
 ## Use Cases
