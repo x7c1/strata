@@ -1,11 +1,11 @@
 ---
-description: Check CI status for a pull request, diagnose failures, and fix them
+description: Fix CI failures for a pull request
 argument-hint: [pr-number]
 ---
 
-# Check CI Skill
+# Fix CI Skill
 
-Checks CI status for a pull request, diagnoses any failures, and implements fixes.
+Diagnoses CI failures for a pull request and implements fixes.
 
 ## Arguments
 
@@ -78,11 +78,11 @@ All CI checks have passed successfully.
 ## Example Usage
 
 ```
-/check-ci
+/fix-ci
 ```
 
 Or with a specific PR:
 
 ```
-/check-ci 42
+/fix-ci 42
 ```
