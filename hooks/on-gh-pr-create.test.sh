@@ -48,17 +48,20 @@ assert_exit_code() {
 
 echo "=== Testing --draft flag requirement ==="
 
+# Use valid body for non-exploratory branches (CI environment has no branch or unknown branch)
+VALID_BODY="## New Features\n- [ ] Test feature"
+
 assert_exit_code "gh pr create with --draft passes" 0 \
-    'gh pr create --title "test" --body "" --draft'
+    "gh pr create --title \"test\" --body \"$VALID_BODY\" --draft"
 
 assert_exit_code "gh pr create without --draft fails" 2 \
-    'gh pr create --title "test" --body ""'
+    "gh pr create --title \"test\" --body \"$VALID_BODY\""
 
 assert_exit_code "gh pr create with --draft at end passes" 0 \
-    'gh pr create --title "test" --body "" --draft'
+    "gh pr create --title \"test\" --body \"$VALID_BODY\" --draft"
 
 assert_exit_code "gh pr create with --draft in middle passes" 0 \
-    'gh pr create --draft --title "test" --body ""'
+    "gh pr create --draft --title \"test\" --body \"$VALID_BODY\""
 
 echo ""
 echo "=== Testing non-gh-pr-create commands ==="
@@ -79,10 +82,10 @@ echo ""
 echo "=== Testing edge cases ==="
 
 assert_exit_code "--draft as part of title should fail" 2 \
-    'gh pr create --title "--draft test" --body ""'
+    "gh pr create --title \"--draft test\" --body \"$VALID_BODY\""
 
 assert_exit_code "--draft as part of body should fail" 2 \
-    'gh pr create --title "test" --body "--draft"'
+    "gh pr create --title \"test\" --body \"--draft $VALID_BODY\""
 
 echo ""
 echo "================================"
