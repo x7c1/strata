@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Get plan.md path from current branch name
+# Get README.md path from current branch name
 
 set -euo pipefail
 
@@ -40,8 +40,8 @@ get_plan_path() {
     # Extract number-description (everything after year-)
     number_and_desc="${plan_part#*-}"
 
-    # Build path: docs/plans/<year>/<number>-<description>/plan.md
-    plan_path="docs/plans/${year}/${number_and_desc}/plan.md"
+    # Build path: docs/plans/<year>/<number>-<description>/README.md
+    plan_path="docs/plans/${year}/${number_and_desc}/README.md"
 
     if [[ -f "$plan_path" ]]; then
         echo "$plan_path"
