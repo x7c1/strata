@@ -15,7 +15,7 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 ## Instructions
 
 - Identify the plan directory from argument or current branch name
-- Read ALL documents in the plan directory (README.md/plan.md, adr.md, research notes, etc.)
+- Read ALL documents in the plan directory (README.md, adr.md, research notes, etc.)
 - Analyze documents from multiple review perspectives
 - Provide structured feedback with specific issues and suggestions
 
@@ -23,8 +23,8 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 
 ### 1. Consistency Between Documents
 
-- Do README.md/plan.md and adr.md align?
-- If ADR chooses approach A, does the plan reflect approach A (not B or C)?
+- Do README.md and adr.md align?
+- If ADR chooses approach A, does README.md reflect approach A (not B or C)?
 - Are terminology and naming consistent across all documents?
 - Do estimates and scope match between documents?
 
