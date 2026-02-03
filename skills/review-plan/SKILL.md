@@ -17,6 +17,7 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 - Identify the plan directory from argument or current branch name
 - Read ALL documents in the plan directory (README.md, adr.md, research notes, etc.)
 - Analyze documents from multiple review perspectives
+- Identify open questions that need clarification
 - Provide structured feedback with specific issues and suggestions
 
 ## Review Perspectives
@@ -73,6 +74,13 @@ Provide feedback in the following structure:
 ## Suggestions
 
 [Optional improvements]
+
+## Open Questions
+
+[Points that need clarification or discussion with the plan author]
+
+- Question 1: [what needs clarification]
+  - Context: [why this matters for implementation]
 
 ## Checklist Verification
 
