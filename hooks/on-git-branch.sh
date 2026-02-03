@@ -32,7 +32,7 @@ Choose the appropriate format based on your situation:
    - Format: \`YYYY-MM-DD_HHMM\`
    - Example: \`$(date '+%Y-%m-%d_%H%M')\`
 
-2. **Task-based work** (from plan.md):
+2. **Task-based work** (from README.md):
    - Format: \`{prefix}/{year}-{number}-{description}\`
    - Prefixes: \`plan/\`, \`feature/\`, \`fix/\`, \`refactor/\`
    - Examples:

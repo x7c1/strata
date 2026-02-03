@@ -11,7 +11,7 @@ Initiates the planning process for any development task including new features, 
 - Conduct requirements interview to understand the task
 - Determine appropriate directory name with sequential numbering
 - Create project directory structure in `docs/plans/{year}/{number}-{descriptive-name}/`
-- Create initial draft of planning document (`plan.md`)
+- Create initial draft of planning document (`README.md`)
 - Present drafts to user for review and feedback
 - Make requested modifications to the documents
 - Mark the planning documents as complete after user approval
@@ -41,18 +41,18 @@ Based on the information gathered:
 - Create the year directory if it doesn't exist
 - Check existing items in that year's directory to determine the next sequential number (starting from 1 for each year)
 - Create project directory with format `{number}-{descriptive-name}`
-- Create initial draft of `plan.md` within the project directory
+- Create initial draft of `README.md` within the project directory
 - Present the drafts for review and incorporate any requested changes
 - Mark the documents as complete once approved
 
 ## Document Structure
 
 Each planning project will contain:
-- `plan.md`: Main planning document with requirements, implementation plan, and timeline
+- `README.md`: Main planning document with requirements, implementation plan, and timeline
   - Use bullet points instead of numbered lists for easy maintenance
   - Use 'points' instead of 'days' for timeline estimates
 - `adr.md`: Architecture Decision Record
   - Only created when there are multiple technical approaches to compare with pros/cons analysis
   - Documents decisions made after struggling with difficult choices between alternatives
 
-**Important**: When `adr.md` exists, the `plan.md` must reflect and be consistent with the decisions made in the ADR. Any technical approaches, implementation methods, or architectural choices documented in the ADR should be accurately represented in the planning document to avoid contradictions.
+**Important**: When `adr.md` exists, the `README.md` must reflect and be consistent with the decisions made in the ADR. Any technical approaches, implementation methods, or architectural choices documented in the ADR should be accurately represented in the planning document to avoid contradictions.

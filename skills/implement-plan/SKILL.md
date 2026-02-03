@@ -9,7 +9,7 @@ Implements features according to a specified plan document, then automates the g
 
 ## Arguments
 
-- `$0`: Path to the plan document (e.g., `docs/plans/2026/1-add-feature/plan.md`)
+- `$0`: Path to the plan document (e.g., `docs/plans/2026/1-add-feature/README.md`)
 
 ## Instructions
 
@@ -28,7 +28,7 @@ Implements features according to a specified plan document, then automates the g
 ## Branch Naming Convention
 
 The branch name is derived from the plan path:
-- Plan path: `docs/plans/2026/1-add-feature/plan.md`
+- Plan path: `docs/plans/2026/1-add-feature/README.md`
 - Branch name: `feature/2026-1-add-feature` or `fix/2026-1-add-feature`
 
 ## Workflow
@@ -64,11 +64,11 @@ The branch name is derived from the plan path:
 ## Example Usage
 
 ```
-/implement-plan docs/plans/2026/1-add-dark-mode/plan.md
+/implement-plan docs/plans/2026/1-add-dark-mode/README.md
 ```
 
 This will:
-- Read the plan at `docs/plans/2026/1-add-dark-mode/plan.md`
+- Read the plan at `docs/plans/2026/1-add-dark-mode/README.md`
 - Create branch `feature/2026-1-add-dark-mode`
 - Implement the dark mode feature as specified
 - Commit, push, and create a PR
@@ -76,5 +76,5 @@ This will:
 ## Notes
 
 - Requires GitHub CLI (gh) to be installed and authenticated
-- The plan document should follow the standard plan.md format
+- The plan document should follow the standard README.md format
 - Always run tests before committing to ensure implementation is correct
