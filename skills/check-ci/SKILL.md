@@ -1,11 +1,11 @@
 ---
-description: Check CI status for a pull request and help diagnose failures
+description: Check CI status for a pull request, diagnose failures, and fix them
 argument-hint: [pr-number]
 ---
 
 # Check CI Skill
 
-Checks CI status for a pull request and helps diagnose any failures.
+Checks CI status for a pull request, diagnoses any failures, and implements fixes.
 
 ## Arguments
 
@@ -20,8 +20,10 @@ Checks CI status for a pull request and helps diagnose any failures.
 - If any checks fail:
   - Show which checks failed
   - Fetch failure logs using `gh run view`
-  - Analyze the error and suggest fixes
-  - Offer to implement the fix if appropriate
+  - Analyze the root cause of the failure
+  - Implement the fix
+  - Commit and push the fix
+  - Verify CI passes after the fix
 
 ## Commands
 
@@ -64,9 +66,13 @@ All CI checks have passed successfully.
 
 [Explanation of what went wrong]
 
-### Suggested Fix
+### Fix Applied
 
-[How to fix the issue]
+[Description of the fix that was implemented]
+
+### Verification
+
+[CI status after fix]
 ```
 
 ## Example Usage
