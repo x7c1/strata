@@ -3,6 +3,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/command-detect.sh"
+source "$SCRIPT_DIR/branch-rules.sh"
 
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
@@ -16,17 +17,7 @@ BRANCH_NAME=$(get_branch_name "$COMMAND")
 
 # Validate branch name
 if [[ -n "$BRANCH_NAME" ]]; then
-
-  # Pattern 1: Exploratory work (YYYY-MM-DD_HHMM)
-  PATTERN_EXPLORATORY='^[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{4}$'
-
-  # Pattern 2: Task-based work ({prefix}/{year}-{number}-{description})
-  # - plan/    : Planning or direct implementation
-  # - feature/ : Implementation (new features)
-  # - fix/     : Implementation (bug fixes)
-  PATTERN_TASK='^(plan|feature|fix)/[0-9]{4}-[0-9]+-[a-z0-9-]+$'
-
-  if [[ "$BRANCH_NAME" =~ $PATTERN_EXPLORATORY ]] || [[ "$BRANCH_NAME" =~ $PATTERN_TASK ]]; then
+  if is_valid_branch_name "$BRANCH_NAME"; then
     exit 0
   fi
 
@@ -43,11 +34,12 @@ Choose the appropriate format based on your situation:
 
 2. **Task-based work** (from plan.md):
    - Format: \`{prefix}/{year}-{number}-{description}\`
-   - Prefixes: \`plan/\` (planning), \`feature/\` (new features), \`fix/\` (bug fixes)
+   - Prefixes: \`plan/\`, \`feature/\`, \`fix/\`, \`refactor/\`
    - Examples:
      - \`plan/2026-1-add-dark-mode\`
-     - \`feature/2026-12-refactor-auth\`
+     - \`feature/2026-12-user-auth\`
      - \`fix/2026-3-login-error\`
+     - \`refactor/2026-18-layer-architecture\`
 EOF
   exit 2
 fi

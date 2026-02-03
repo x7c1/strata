@@ -20,6 +20,12 @@ main() {
         exit 0
     fi
 
+    # Require --draft flag
+    if ! echo "$command" | grep -qE '\s--draft\b'; then
+        echo "ERROR: --draft flag is required for gh pr create" >&2
+        exit 2
+    fi
+
     branch_name=$(git branch --show-current 2>/dev/null || echo "")
 
     if is_exploratory_branch "$branch_name"; then
