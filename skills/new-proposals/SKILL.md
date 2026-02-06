@@ -15,7 +15,7 @@ Generates improvement proposals by analyzing the codebase or capturing user idea
 
 ## Mode 1: Codebase Review
 
-Analyze the codebase for improvement opportunities and generate proposals as a batch.
+Analyze the codebase for improvement opportunities and generate proposals.
 
 ### Instructions
 
@@ -52,8 +52,8 @@ Capture a user's idea and format it into a proposal.
 - Format the idea into a proposal
 - Present the proposal to the user for review before writing
 - After user approval, write proposal to `docs/proposals/{YYYY-MM-DD}-{context}/`
-  - Reuse today's batch directory if one already exists and the context fits
-  - Otherwise create a new batch directory
+  - Reuse today's context directory if one already exists and the context fits
+  - Otherwise create a new context directory
 
 ## Proposal File Format
 
@@ -102,7 +102,7 @@ docs/proposals/
     {descriptive-name}.md
 ```
 
-- Batch directory: `{date}-{context-description}` (e.g., `2026-02-06-codebase-review`)
+- Context directory: `{date}-{context-description}` (e.g., `2026-02-06-codebase-review`)
 - Proposal files: `{descriptive-name}.md` (e.g., `improve-error-handling.md`)
 - No numbering — file names should be descriptive kebab-case
 
@@ -111,8 +111,8 @@ docs/proposals/
 - Always check existing proposals in `docs/proposals/` (all statuses) before generating new ones to avoid duplicates
 - Decision checkboxes are always unchecked — triaging is done by `review-proposals`
 - Present generated proposals to the user for review before writing any files
-- In codebase review mode, generate all proposals as a batch in a single directory
-- In manual input mode, reuse today's batch directory when appropriate
+- In codebase review mode, generate all proposals in a single context directory
+- In manual input mode, reuse today's context directory when appropriate
 
 ## Example Usage
 
