@@ -114,19 +114,85 @@ print_full_template() {
 
 # Validation functions
 
+extract_title_from_command() {
+    local command="$1"
+    # Collapse newlines to handle body content with literal newlines from JSON
+    echo "$command" | tr '\n' ' ' | sed -E 's/.*--title\s+["\x27]([^"\x27]*)["\x27].*/\1/' || echo ""
+}
+
+validate_pr_title_typed() {
+    local command="$1"
+    local title
+    title=$(extract_title_from_command "$command")
+
+    if [[ "$title" == "$command" ]]; then
+        return 0  # Cannot extract, allow
+    fi
+
+    if [[ -z "$title" ]]; then
+        echo "ERROR: PR title is required." >&2
+        exit 2
+    fi
+
+    # Validate type(scope): subject format
+    if ! echo "$title" | grep -qE '^(feat|fix|refactor|docs|chore)\([a-z0-9-]+\): .+'; then
+        cat >&2 << 'EOF'
+ERROR: PR title must match format: type(scope): subject
+
+Types: feat, fix, refactor, docs, chore
+Example: feat(skills): add proposal management skills
+EOF
+        exit 2
+    fi
+
+    # Max 60 characters
+    if [[ ${#title} -gt 60 ]]; then
+        echo "ERROR: PR title must be 60 characters or less (currently ${#title})." >&2
+        exit 2
+    fi
+
+    # No period at end
+    if [[ "$title" == *. ]]; then
+        echo "ERROR: PR title must not end with a period." >&2
+        exit 2
+    fi
+}
+
+validate_pr_title_exploratory() {
+    local command="$1"
+    local title
+    title=$(extract_title_from_command "$command")
+
+    if [[ "$title" == "$command" ]]; then
+        return 0
+    fi
+
+    if ! echo "$title" | grep -qE '^since [0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+        cat >&2 << 'EOF'
+ERROR: Exploratory PR with empty body must use title: since YYYY-MM-DD
+
+Example: gh pr create --title "since 2026-02-06" --body "" --draft
+EOF
+        exit 2
+    fi
+}
+
 extract_body_from_command() {
     local command="$1"
+    # Collapse newlines to handle body content with literal newlines from JSON
+    local flat_command
+    flat_command=$(echo "$command" | tr '\n' ' ')
     # Extract body content from --body "..." or --body '...'
     # Handle HEREDOC style: --body "$(cat <<'EOF' ... EOF)"
-    if echo "$command" | grep -qE -- '--body\s+"?\$\(cat'; then
+    if echo "$flat_command" | grep -qE -- '--body\s+"?\$\(cat'; then
         # HEREDOC style - extract content between the markers
-        echo "$command" | sed -E 's/.*--body\s+"?\$\(cat <<['\''"]?EOF['\''"]?//' | sed -E 's/EOF\s*\)\"?.*//'
-    elif echo "$command" | grep -qE -- '--body\s+""'; then
+        echo "$flat_command" | sed -E 's/.*--body\s+"?\$\(cat <<['\''"]?EOF['\''"]?//' | sed -E 's/EOF\s*\)\"?.*//'
+    elif echo "$flat_command" | grep -qE -- '--body\s+""'; then
         # Empty body
         echo ""
     else
         # Simple --body "content" style
-        echo "$command" | sed -E 's/.*--body\s+["\x27]([^"\x27]*)["\x27].*/\1/' || echo ""
+        echo "$flat_command" | sed -E 's/.*--body\s+["\x27]([^"\x27]*)["\x27].*/\1/' || echo ""
     fi
 }
 

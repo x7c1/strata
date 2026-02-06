@@ -221,6 +221,73 @@ assert_exit_code "Body without valid section fails" 2 \
     run_validate_body_format 'gh pr create --body "just some text" --draft'
 
 echo ""
+echo "=== Testing extract_title_from_command ==="
+
+assert_equals "Extract simple title" \
+    "feat(skills): add proposals" \
+    "$(extract_title_from_command 'gh pr create --title "feat(skills): add proposals" --draft')"
+
+assert_equals "Extract title with body after" \
+    "fix(hooks): update validation" \
+    "$(extract_title_from_command 'gh pr create --title "fix(hooks): update validation" --body "" --draft')"
+
+echo ""
+echo "=== Testing validate_pr_title_typed ==="
+
+run_validate_title_typed() {
+    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
+        source "$SCRIPT_DIR/pr-rules.sh"
+        validate_pr_title_typed "$1"
+    )
+}
+
+assert_exit_code "Valid feat(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "feat(skills): add proposal skills" --draft'
+
+assert_exit_code "Valid fix(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "fix(hooks): update validation" --draft'
+
+assert_exit_code "Valid refactor(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "refactor(hooks): unify PR validation" --draft'
+
+assert_exit_code "Valid docs(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "docs(readme): update examples" --draft'
+
+assert_exit_code "Valid chore(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "chore(deps): update dependencies" --draft'
+
+assert_exit_code "Missing type prefix fails" 2 \
+    run_validate_title_typed 'gh pr create --title "add new feature" --draft'
+
+assert_exit_code "Exploratory title format fails" 2 \
+    run_validate_title_typed 'gh pr create --title "since 2026-02-06" --draft'
+
+assert_exit_code "Title ending with period fails" 2 \
+    run_validate_title_typed 'gh pr create --title "feat(skills): add proposals." --draft'
+
+assert_exit_code "Title over 60 chars fails" 2 \
+    run_validate_title_typed 'gh pr create --title "feat(skills): this is a very long title that exceeds sixty characters limit" --draft'
+
+echo ""
+echo "=== Testing validate_pr_title_exploratory ==="
+
+run_validate_title_exploratory() {
+    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
+        source "$SCRIPT_DIR/pr-rules.sh"
+        validate_pr_title_exploratory "$1"
+    )
+}
+
+assert_exit_code "Valid since title passes" 0 \
+    run_validate_title_exploratory 'gh pr create --title "since 2026-02-06" --draft'
+
+assert_exit_code "Typed title fails for exploratory" 2 \
+    run_validate_title_exploratory 'gh pr create --title "feat(skills): add proposals" --draft'
+
+assert_exit_code "Random title fails for exploratory" 2 \
+    run_validate_title_exploratory 'gh pr create --title "some random title" --draft'
+
+echo ""
 echo "================================"
 echo -e "Results: ${GREEN}$PASS passed${NC}, ${RED}$FAIL failed${NC}"
 

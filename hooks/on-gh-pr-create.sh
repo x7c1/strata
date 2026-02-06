@@ -30,12 +30,21 @@ main() {
 
     if is_exploratory_branch "$branch_name"; then
         validate_pr_body_format "$command" "allow_empty"
+        local body
+        body=$(extract_body_from_command "$command")
+        if [[ -n "$body" && "$body" != "$command" ]]; then
+            validate_pr_title_typed "$command"
+        else
+            validate_pr_title_exploratory "$command"
+        fi
         print_exploratory_rules
     elif is_implementation_branch "$branch_name"; then
         validate_pr_body_format "$command"
+        validate_pr_title_typed "$command"
         print_implementation_rules "$branch_name"
     else
         validate_pr_body_format "$command"
+        validate_pr_title_typed "$command"
         print_standard_create_rules
     fi
 
