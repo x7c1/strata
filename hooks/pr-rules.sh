@@ -83,7 +83,7 @@ print_body_rules() {
 - Use regular bullets (`-`) for Refactoring and Breaking Changes
 - Skip sections with no items
 - Keep descriptions concise
-- "Bug Fixes" is only for pre-existing bugs. Do not list bugs introduced and fixed within this PR.
+- "Bug Fixes" and "Refactoring" are only for pre-existing code. Do not list changes to code introduced within this PR.
 EOF
 }
 
