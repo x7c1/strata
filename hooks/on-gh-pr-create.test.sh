@@ -48,20 +48,21 @@ assert_exit_code() {
 
 echo "=== Testing --draft flag requirement ==="
 
-# Use valid body for non-exploratory branches (CI environment has no branch or unknown branch)
+# Use valid title and body for non-exploratory branches (CI environment has no branch or unknown branch)
+VALID_TITLE="feat(test): add test feature"
 VALID_BODY="## New Features\n- [ ] Test feature"
 
 assert_exit_code "gh pr create with --draft passes" 0 \
-    "gh pr create --title \"test\" --body \"$VALID_BODY\" --draft"
+    "gh pr create --title \"$VALID_TITLE\" --body \"$VALID_BODY\" --draft"
 
 assert_exit_code "gh pr create without --draft fails" 2 \
-    "gh pr create --title \"test\" --body \"$VALID_BODY\""
+    "gh pr create --title \"$VALID_TITLE\" --body \"$VALID_BODY\""
 
 assert_exit_code "gh pr create with --draft at end passes" 0 \
-    "gh pr create --title \"test\" --body \"$VALID_BODY\" --draft"
+    "gh pr create --title \"$VALID_TITLE\" --body \"$VALID_BODY\" --draft"
 
 assert_exit_code "gh pr create with --draft in middle passes" 0 \
-    "gh pr create --draft --title \"test\" --body \"$VALID_BODY\""
+    "gh pr create --draft --title \"$VALID_TITLE\" --body \"$VALID_BODY\""
 
 echo ""
 echo "=== Testing non-gh-pr-create commands ==="
@@ -85,7 +86,16 @@ assert_exit_code "--draft as part of title should fail" 2 \
     "gh pr create --title \"--draft test\" --body \"$VALID_BODY\""
 
 assert_exit_code "--draft as part of body should fail" 2 \
-    "gh pr create --title \"test\" --body \"--draft $VALID_BODY\""
+    "gh pr create --title \"$VALID_TITLE\" --body \"--draft $VALID_BODY\""
+
+echo ""
+echo "=== Testing title validation ==="
+
+assert_exit_code "Invalid title without type(scope) fails" 2 \
+    "gh pr create --title \"some random title\" --body \"$VALID_BODY\" --draft"
+
+assert_exit_code "Exploratory title with body fails" 2 \
+    "gh pr create --title \"since 2026-02-06\" --body \"$VALID_BODY\" --draft"
 
 echo ""
 echo "================================"

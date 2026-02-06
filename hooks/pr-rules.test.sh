@@ -159,9 +159,8 @@ assert_equals "Extract body with ## header" \
     "$(extract_body_from_command 'gh pr create --body "## Bug Fixes" --draft')"
 
 echo ""
-echo "=== Testing validate_exploratory_pr ==="
+echo "=== Testing validate_pr_body_format ==="
 
-# Test: empty body should pass
 assert_exit_code() {
     local description="$1"
     local expected_code="$2"
@@ -177,28 +176,25 @@ assert_exit_code() {
     fi
 }
 
-run_validate_exploratory() {
-    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
-        source "$SCRIPT_DIR/pr-rules.sh"
-        validate_exploratory_pr "$1"
-    )
-}
-
 run_validate_body_format() {
     echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
         source "$SCRIPT_DIR/pr-rules.sh"
-        validate_pr_body_format "$1"
+        validate_pr_body_format "$1" "${2:-}"
     )
 }
 
-assert_exit_code "Exploratory: empty body passes" 0 \
-    run_validate_exploratory 'gh pr create --body "" --draft'
+echo "--- allow_empty ---"
 
-assert_exit_code "Exploratory: non-empty body fails" 2 \
-    run_validate_exploratory 'gh pr create --body "content" --draft'
+assert_exit_code "allow_empty: empty body passes" 0 \
+    run_validate_body_format 'gh pr create --body "" --draft' "allow_empty"
 
-echo ""
-echo "=== Testing validate_pr_body_format ==="
+assert_exit_code "allow_empty: valid body passes" 0 \
+    run_validate_body_format 'gh pr create --body "## Bug Fixes" --draft' "allow_empty"
+
+assert_exit_code "allow_empty: invalid body fails" 2 \
+    run_validate_body_format 'gh pr create --body "content" --draft' "allow_empty"
+
+echo "--- standard ---"
 
 assert_exit_code "Valid body with ## Bug Fixes passes" 0 \
     run_validate_body_format 'gh pr create --body "## Bug Fixes" --draft'
@@ -223,6 +219,73 @@ assert_exit_code "Empty body fails" 2 \
 
 assert_exit_code "Body without valid section fails" 2 \
     run_validate_body_format 'gh pr create --body "just some text" --draft'
+
+echo ""
+echo "=== Testing extract_title_from_command ==="
+
+assert_equals "Extract simple title" \
+    "feat(skills): add proposals" \
+    "$(extract_title_from_command 'gh pr create --title "feat(skills): add proposals" --draft')"
+
+assert_equals "Extract title with body after" \
+    "fix(hooks): update validation" \
+    "$(extract_title_from_command 'gh pr create --title "fix(hooks): update validation" --body "" --draft')"
+
+echo ""
+echo "=== Testing validate_pr_title_typed ==="
+
+run_validate_title_typed() {
+    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
+        source "$SCRIPT_DIR/pr-rules.sh"
+        validate_pr_title_typed "$1"
+    )
+}
+
+assert_exit_code "Valid feat(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "feat(skills): add proposal skills" --draft'
+
+assert_exit_code "Valid fix(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "fix(hooks): update validation" --draft'
+
+assert_exit_code "Valid refactor(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "refactor(hooks): unify PR validation" --draft'
+
+assert_exit_code "Valid docs(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "docs(readme): update examples" --draft'
+
+assert_exit_code "Valid chore(scope): subject passes" 0 \
+    run_validate_title_typed 'gh pr create --title "chore(deps): update dependencies" --draft'
+
+assert_exit_code "Missing type prefix fails" 2 \
+    run_validate_title_typed 'gh pr create --title "add new feature" --draft'
+
+assert_exit_code "Exploratory title format fails" 2 \
+    run_validate_title_typed 'gh pr create --title "since 2026-02-06" --draft'
+
+assert_exit_code "Title ending with period fails" 2 \
+    run_validate_title_typed 'gh pr create --title "feat(skills): add proposals." --draft'
+
+assert_exit_code "Title over 60 chars fails" 2 \
+    run_validate_title_typed 'gh pr create --title "feat(skills): this is a very long title that exceeds sixty characters limit" --draft'
+
+echo ""
+echo "=== Testing validate_pr_title_exploratory ==="
+
+run_validate_title_exploratory() {
+    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
+        source "$SCRIPT_DIR/pr-rules.sh"
+        validate_pr_title_exploratory "$1"
+    )
+}
+
+assert_exit_code "Valid since title passes" 0 \
+    run_validate_title_exploratory 'gh pr create --title "since 2026-02-06" --draft'
+
+assert_exit_code "Typed title fails for exploratory" 2 \
+    run_validate_title_exploratory 'gh pr create --title "feat(skills): add proposals" --draft'
+
+assert_exit_code "Random title fails for exploratory" 2 \
+    run_validate_title_exploratory 'gh pr create --title "some random title" --draft'
 
 echo ""
 echo "================================"
