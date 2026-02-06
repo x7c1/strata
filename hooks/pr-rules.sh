@@ -130,24 +130,9 @@ extract_body_from_command() {
     fi
 }
 
-validate_exploratory_pr() {
-    local command="$1"
-    local body
-    body=$(extract_body_from_command "$command")
-
-    # Exploratory PRs must have empty body
-    if [[ -n "$body" && "$body" != "$command" ]]; then
-        cat >&2 << 'EOF'
-ERROR: Exploratory branch PRs must have an empty body.
-
-Use: gh pr create --title "since YYYY-MM-DD" --body "" --draft
-EOF
-        exit 2
-    fi
-}
-
 validate_pr_body_format() {
     local command="$1"
+    local allow_empty="${2:-}"
     local body
     body=$(extract_body_from_command "$command")
 
@@ -156,7 +141,11 @@ validate_pr_body_format() {
         return 0  # Cannot validate, allow
     fi
 
-    # Empty body is not allowed for non-exploratory PRs
+    # Empty body is allowed for exploratory PRs
+    if [[ -z "$body" && "$allow_empty" == "allow_empty" ]]; then
+        return 0
+    fi
+
     if [[ -z "$body" ]]; then
         cat >&2 << 'EOF'
 ERROR: PR body is required.

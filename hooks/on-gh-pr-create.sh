@@ -29,7 +29,7 @@ main() {
     branch_name=$(git branch --show-current 2>/dev/null || echo "")
 
     if is_exploratory_branch "$branch_name"; then
-        validate_exploratory_pr "$command"
+        validate_pr_body_format "$command" "allow_empty"
         print_exploratory_rules
     elif is_implementation_branch "$branch_name"; then
         validate_pr_body_format "$command"
@@ -65,16 +65,21 @@ print_exploratory_rules() {
     rules=$(cat << EOF
 ## PR Creation Rules (Exploratory Branch)
 
-This is an exploratory branch. Create a minimal draft PR:
+This is an exploratory branch. Choose one of the following:
 
+### Option A: Minimal (no description yet)
 **Title**: \`since ${first_date:-YYYY-MM-DD}\`
 **Body**: empty
 **Options**: --draft
 
-Example:
-\`\`\`
-gh pr create --title "since ${first_date:-YYYY-MM-DD}" --body "" --draft
-\`\`\`
+### Option B: With description (when commits already exist)
+Follow the standard PR format:
+
+$(print_full_template)
+
+$(print_labels_rules)
+
+**Options**: --draft
 EOF
 )
     output_json "$rules"

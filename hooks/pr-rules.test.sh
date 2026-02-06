@@ -159,9 +159,8 @@ assert_equals "Extract body with ## header" \
     "$(extract_body_from_command 'gh pr create --body "## Bug Fixes" --draft')"
 
 echo ""
-echo "=== Testing validate_exploratory_pr ==="
+echo "=== Testing validate_pr_body_format ==="
 
-# Test: empty body should pass
 assert_exit_code() {
     local description="$1"
     local expected_code="$2"
@@ -177,28 +176,25 @@ assert_exit_code() {
     fi
 }
 
-run_validate_exploratory() {
-    echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
-        source "$SCRIPT_DIR/pr-rules.sh"
-        validate_exploratory_pr "$1"
-    )
-}
-
 run_validate_body_format() {
     echo "{\"tool_input\":{\"command\":\"$1\"}}" | (
         source "$SCRIPT_DIR/pr-rules.sh"
-        validate_pr_body_format "$1"
+        validate_pr_body_format "$1" "${2:-}"
     )
 }
 
-assert_exit_code "Exploratory: empty body passes" 0 \
-    run_validate_exploratory 'gh pr create --body "" --draft'
+echo "--- allow_empty ---"
 
-assert_exit_code "Exploratory: non-empty body fails" 2 \
-    run_validate_exploratory 'gh pr create --body "content" --draft'
+assert_exit_code "allow_empty: empty body passes" 0 \
+    run_validate_body_format 'gh pr create --body "" --draft' "allow_empty"
 
-echo ""
-echo "=== Testing validate_pr_body_format ==="
+assert_exit_code "allow_empty: valid body passes" 0 \
+    run_validate_body_format 'gh pr create --body "## Bug Fixes" --draft' "allow_empty"
+
+assert_exit_code "allow_empty: invalid body fails" 2 \
+    run_validate_body_format 'gh pr create --body "content" --draft' "allow_empty"
+
+echo "--- standard ---"
 
 assert_exit_code "Valid body with ## Bug Fixes passes" 0 \
     run_validate_body_format 'gh pr create --body "## Bug Fixes" --draft'
