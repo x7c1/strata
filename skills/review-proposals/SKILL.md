@@ -9,16 +9,11 @@ Reviews improvement proposals in `docs/proposals/` and lets the user triage each
 
 ## Arguments
 
-- `$0`: Optional context directory path or name
-  - Accepts either a full path (e.g., `docs/proposals/2026-02-06-codebase-review`) or just the directory name (e.g., `2026-02-06-codebase-review`)
-  - If specified: review proposals in that context directory only
-  - If omitted: review proposals in the most recent context directory (sorted by date)
+- `$0`: Optional context directory name or path (may include `docs/proposals/` prefix). Defaults to the most recent context directory.
 
 ## Instructions
 
-- Determine the target context directory:
-  - If `$0` is specified, resolve it to a path under `docs/proposals/` (strip any leading path if it already includes `docs/proposals/`)
-  - If `$0` is omitted, find the most recent context directory in `docs/proposals/` (sorted by directory name descending)
+- Resolve `$0` to a context directory under `docs/proposals/`. If omitted, use the most recent one.
 - If the target directory does not exist or has no proposal files, inform the user and exit
 - Only process proposals whose Decision section has no option checked yet
 - For each undecided proposal:
