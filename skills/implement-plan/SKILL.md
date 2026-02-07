@@ -56,11 +56,9 @@ Intermediate parents use their number only; the last segment (target plan) inclu
   - Understand the scope and requirements
   - If this is a sub-plan, also read the parent plan for context
 
-- **Step 2: Create Branch**
-  - Extract plan hierarchy from path
-  - Determine branch type based on plan content (feature or fix)
-  - Create branch following the naming convention above
-  - Switch to the new branch
+- **Step 2: Branch**
+  - If on the main branch: create a new branch following the naming convention above and switch to it
+  - If on any other branch: stay on the current branch (implementation continues on the existing branch)
 
 - **Step 3: Implement**
   - Follow the plan document step by step
