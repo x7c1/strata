@@ -14,7 +14,7 @@ Implements features according to a specified plan document, then automates the g
 ## Instructions
 
 - Read and understand the plan document at the specified path
-- Create a new branch based on the plan directory name (see Branch Naming Convention)
+- If on the main branch, create a new branch based on the plan directory name (see Branch Naming Convention)
 - Implement all items specified in the plan document
 - After implementation is complete:
   - Stage all relevant changes
