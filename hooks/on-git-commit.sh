@@ -21,8 +21,13 @@ fi
 # Extract commit message from command
 COMMIT_MSG=""
 if echo "$COMMAND" | grep -qE -- '-m\s'; then
-    # Extract message after -m flag
-    COMMIT_MSG=$(echo "$COMMAND" | sed -E 's/.*-m\s*["\x27]([^"\x27]*)["\x27].*/\1/' || true)
+    if echo "$COMMAND" | grep -q '<<.*EOF'; then
+        # HEREDOC style: extract content between EOF markers
+        COMMIT_MSG=$(echo "$COMMAND" | sed -n "/<<.*EOF/,/^EOF/{/<<.*EOF/d;/^EOF/d;p}")
+    else
+        # Simple -m "message" style
+        COMMIT_MSG=$(echo "$COMMAND" | sed -E 's/.*-m\s*["\x27]([^"\x27]*)["\x27].*/\1/' || true)
+    fi
 fi
 
 # Run formatting on staged files (silently)
