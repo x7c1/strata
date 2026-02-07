@@ -55,6 +55,27 @@ assert_exit_code "Co-Authored-By is rejected" 2 \
     'git commit -m "docs: msg Co-Authored-By: Someone"'
 
 echo ""
+echo "=== Testing git -C flag ==="
+
+assert_exit_code "git -C commit with Co-Authored-By is rejected" 2 \
+    'git -C /projects/developer commit -m "docs: msg Co-Authored-By: Someone"'
+
+GIT_C_HEREDOC=$(cat <<'TESTCMD'
+git -C /projects/developer add file.txt && git -C /projects/developer commit -m "$(cat <<'EOF'
+docs(plans): message
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+EOF
+)"
+TESTCMD
+)
+
+assert_exit_code "git -C chained with HEREDOC Co-Authored-By is rejected" 2 "$GIT_C_HEREDOC"
+
+assert_exit_code "git -C commit with clean message passes" 0 \
+    'git -C /projects/developer commit -m "test(licensing): valid message"'
+
+echo ""
 echo "=== Testing HEREDOC format ==="
 
 # HEREDOC with clean single-line message
