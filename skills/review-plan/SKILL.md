@@ -16,6 +16,7 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 
 - Identify the plan directory from argument or current branch name
 - Read ALL documents in the plan directory (README.md, adr.md, research notes, etc.)
+- Check for a `plans/` subdirectory — if sub-plans exist, read those as well
 - Analyze documents from multiple review perspectives
 - Identify open questions that need clarification
 - Provide structured feedback with specific issues and suggestions
@@ -49,6 +50,16 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 - Are there TODOs or placeholders that need resolution?
 - Is the problem statement clear?
 - Is the solution approach justified?
+
+### 5. Parent-SubPlan Consistency
+
+Only applicable when the plan has a `plans/` subdirectory containing sub-plans:
+
+- Does the parent plan's scope cover the union of all sub-plans?
+- Are sub-plan boundaries clearly delineated (no overlap between sub-plans)?
+- Do sub-plan requirements trace back to parent plan requirements?
+- Is the breakdown logical — could the sub-plans be implemented independently?
+- Are there gaps — areas in the parent plan not covered by any sub-plan?
 
 ## Output Format
 
@@ -88,6 +99,7 @@ Provide feedback in the following structure:
 - [ ] Technical approach is feasible
 - [ ] Implementation details are clear
 - [ ] Scope is well-defined
+- [ ] Sub-plans are consistent with parent plan (if applicable)
 ```
 
 ## Example Usage

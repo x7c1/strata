@@ -14,10 +14,7 @@ Implements features according to a specified plan document, then automates the g
 ## Instructions
 
 - Read and understand the plan document at the specified path
-- Create a new branch based on the plan directory name
-  - Branch naming: `feature/<year>-<number>-<description>` or `fix/<year>-<number>-<description>`
-  - Use `feature/` for new features, enhancements
-  - Use `fix/` for bug fixes
+- Create a new branch based on the plan directory name (see Branch Naming Convention)
 - Implement all items specified in the plan document
 - After implementation is complete:
   - Stage all relevant changes
@@ -27,9 +24,29 @@ Implements features according to a specified plan document, then automates the g
 
 ## Branch Naming Convention
 
-The branch name is derived from the plan path:
+The branch name is derived from the plan path. Use `feature/` for new features and enhancements, `fix/` for bug fixes.
+
+### Top-Level Plans
+
 - Plan path: `docs/plans/2026/1-add-feature/README.md`
-- Branch name: `feature/2026-1-add-feature` or `fix/2026-1-add-feature`
+- Branch name: `feature/2026-1-add-feature`
+
+### Sub-Plans
+
+Sub-plan branches use `{year}-{parent-number}` as prefix, followed by the sub-plan's `{number}-{description}`:
+
+- Plan path: `docs/plans/2026/17-licensing/plans/1-payment-flow/README.md`
+- Branch name: `feature/2026-17/1-payment-flow`
+
+### Deeper Nesting
+
+Intermediate parents use their number only; the last segment (target plan) includes the description:
+
+- Plan path: `docs/plans/2026/17-licensing/plans/1-payment-flow/plans/2-validation/README.md`
+- Branch name: `feature/2026-17/1/2-validation`
+
+- Plan path: `docs/plans/2026/17-licensing/plans/1-payment-flow/plans/2-validation/plans/1-edge-case/README.md`
+- Branch name: `feature/2026-17/1/2/1-edge-case`
 
 ## Workflow
 
@@ -37,11 +54,12 @@ The branch name is derived from the plan path:
   - Parse the plan document
   - Identify all implementation tasks
   - Understand the scope and requirements
+  - If this is a sub-plan, also read the parent plan for context
 
 - **Step 2: Create Branch**
-  - Extract year and directory name from plan path
+  - Extract plan hierarchy from path
   - Determine branch type based on plan content (feature or fix)
-  - Create branch with format `feature/<year>-<number>-<description>` or `fix/<year>-<number>-<description>`
+  - Create branch following the naming convention above
   - Switch to the new branch
 
 - **Step 3: Implement**
@@ -63,15 +81,15 @@ The branch name is derived from the plan path:
 
 ## Example Usage
 
+Top-level plan:
 ```
 /implement-plan docs/plans/2026/1-add-dark-mode/README.md
 ```
 
-This will:
-- Read the plan at `docs/plans/2026/1-add-dark-mode/README.md`
-- Create branch `feature/2026-1-add-dark-mode`
-- Implement the dark mode feature as specified
-- Commit, push, and create a PR
+Sub-plan:
+```
+/implement-plan docs/plans/2026/17-licensing/plans/1-payment-flow/README.md
+```
 
 ## Notes
 
