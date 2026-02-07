@@ -39,9 +39,22 @@ docs/proposals/
 
 ## Accept Workflow
 
+After checking the Accept box, ask the user how to create the plan:
+
+### Option A: Create as Top-Level Plan
+
 - Determine the next sequential plan number in `docs/plans/{year}/`
 - Create plan directory: `docs/plans/{year}/{number}-{descriptive-name}/`
 - Move the proposal file to `docs/plans/{year}/{number}-{descriptive-name}/proposal.md`
+- Start the new-plan workflow to create `README.md` based on the moved proposal
+
+### Option B: Add as Sub-Plan of Existing Plan
+
+- Ask the user to specify (or select) the parent plan
+- Determine the next sequential number in `{parent-plan}/plans/`
+- Create the `plans/` directory under the parent if it doesn't exist
+- Create sub-plan directory: `{parent-plan}/plans/{number}-{descriptive-name}/`
+- Move the proposal file to `{parent-plan}/plans/{number}-{descriptive-name}/proposal.md`
 - Start the new-plan workflow to create `README.md` based on the moved proposal
 
 ## Reject Workflow

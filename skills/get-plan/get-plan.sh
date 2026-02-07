@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Get README.md path from current branch name
+# Supports plan/, feature/, fix/ prefixes and nested sub-plans
 
 set -euo pipefail
 
@@ -13,35 +14,95 @@ main() {
         exit 1
     fi
 
-    if is_plan_branch "$branch"; then
-        get_plan_path "$branch"
-    else
+    local prefix
+    prefix=$(get_branch_prefix "$branch")
+
+    if [[ -z "$prefix" ]]; then
         echo "No plan associated with branch: $branch"
         echo "This appears to be an exploratory branch."
         exit 0
     fi
+
+    get_plan_path "$branch" "$prefix"
 }
 
-is_plan_branch() {
+get_branch_prefix() {
     local branch="$1"
-    [[ "$branch" =~ ^plan/ ]]
+    if [[ "$branch" =~ ^plan/ ]]; then
+        echo "plan/"
+    elif [[ "$branch" =~ ^feature/ ]]; then
+        echo "feature/"
+    elif [[ "$branch" =~ ^fix/ ]]; then
+        echo "fix/"
+    fi
+}
+
+# Find a directory matching "{number}-*" in the given base directory
+resolve_dir_by_number() {
+    local base_dir="$1"
+    local number="$2"
+
+    local matches=()
+    for dir in "${base_dir}/${number}-"*/; do
+        [[ -d "$dir" ]] && matches+=("$dir")
+    done
+
+    if [[ ${#matches[@]} -eq 0 ]]; then
+        echo "Error: No directory matching '${number}-*' in ${base_dir}/" >&2
+        exit 1
+    fi
+    if [[ ${#matches[@]} -gt 1 ]]; then
+        echo "Error: Multiple directories matching '${number}-*' in ${base_dir}/" >&2
+        exit 1
+    fi
+
+    basename "${matches[0]}"
 }
 
 get_plan_path() {
     local branch="$1"
-    local plan_part year number_and_desc plan_path
+    local prefix="$2"
 
-    # Remove "plan/" prefix
-    plan_part="${branch#plan/}"
+    # Remove prefix
+    local plan_part="${branch#"$prefix"}"
 
-    # Extract year (first part before -)
-    year="${plan_part%%-*}"
+    # Split by /
+    IFS='/' read -ra segments <<< "$plan_part"
 
-    # Extract number-description (everything after year-)
-    number_and_desc="${plan_part#*-}"
+    if [[ ${#segments[@]} -eq 0 ]]; then
+        echo "Error: Empty plan path" >&2
+        exit 1
+    fi
 
-    # Build path: docs/plans/<year>/<number>-<description>/README.md
-    plan_path="docs/plans/${year}/${number_and_desc}/README.md"
+    # First segment: "year-number-description" or "year-number"
+    local first="${segments[0]}"
+    local year="${first%%-*}"
+    local identifier="${first#*-}"
+
+    local plan_path
+
+    if [[ ${#segments[@]} -eq 1 ]]; then
+        # Single segment: full name (e.g., "2026-17-subscription-licensing")
+        plan_path="docs/plans/${year}/${identifier}"
+    else
+        # Multiple segments: first is "year-number", resolve to full directory name
+        local top_dir
+        top_dir=$(resolve_dir_by_number "docs/plans/${year}" "$identifier")
+        plan_path="docs/plans/${year}/${top_dir}"
+
+        # Intermediate segments (all except last): number-only, need resolution
+        for ((i = 1; i < ${#segments[@]} - 1; i++)); do
+            local sub_dir
+            sub_dir=$(resolve_dir_by_number "${plan_path}/plans" "${segments[$i]}")
+            plan_path="${plan_path}/plans/${sub_dir}"
+        done
+
+        # Last segment: full "number-description", use directly
+        local last="${segments[${#segments[@]} - 1]}"
+        plan_path="${plan_path}/plans/${last}"
+    fi
+
+    plan_path="${plan_path}/README.md"
 
     if [[ -f "$plan_path" ]]; then
         echo "$plan_path"
