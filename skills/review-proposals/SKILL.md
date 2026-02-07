@@ -15,10 +15,11 @@ Reviews improvement proposals in `docs/proposals/` and lets the user triage each
 
 - If `$0` is omitted, use the most recent context directory in `docs/proposals/`.
 - If the target directory does not exist or has no proposal files, inform the user and exit
-- Only process proposals whose Decision section has no option checked yet
-- For each undecided proposal:
-  - Read and present a brief summary of the proposal
+- Process proposals whose Decision section has no option checked, or has Defer checked
+- For each proposal to review:
+  - Read and present a brief summary of the proposal (include existing Notes if previously deferred)
   - Use AskUserQuestion to let the user choose: **Accept** / **Reject** / **Defer**
+  - If changing from Defer to another decision, uncheck Defer before checking the new option
   - **Accept**: Check the Accept box in the proposal, then move it to the plan directory and start plan creation
   - **Reject**: Check the Reject box in the proposal and leave it in place as a record
   - **Defer**: Check the Defer box in the proposal and leave it in place for future review
