@@ -5,7 +5,7 @@
 # Check if command is a git commit
 is_git_commit() {
     local command="$1"
-    echo "$command" | grep -qE '\bgit commit\b'
+    echo "$command" | grep -qE '\bgit\b.*\bcommit\b'
 }
 
 # Check if command is a non-branch-creating git command
