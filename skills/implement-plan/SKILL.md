@@ -65,14 +65,18 @@ Intermediate parents use their number only; the last segment (target plan) inclu
   - Implement all required changes
   - Run build and tests to verify (check the project's CLAUDE.md for specific commands)
 
-- **Step 4: Commit**
+- **Step 4: Update Plan Status**
+  - Change the plan's `Status:` line from `Open` to `Completed`
+  - If the plan has no `Status:` line, add `Status: Completed` immediately after the `#` heading
+
+- **Step 5: Commit**
   - Stage all changes related to the implementation
   - Create a commit with message describing what was implemented
 
-- **Step 5: Push**
+- **Step 6: Push**
   - Push the branch to origin
 
-- **Step 6: Create Pull Request**
+- **Step 7: Create Pull Request**
   - Create PR using `gh pr create`
   - Include summary of implemented features
   - Reference the plan document in PR description

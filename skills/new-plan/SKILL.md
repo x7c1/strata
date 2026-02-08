@@ -82,6 +82,7 @@ docs/plans/{year}/{parent-number}-{parent-name}/
 
 Each plan (top-level or sub-plan) will contain:
 - `README.md`: Main planning document with requirements, implementation plan, and timeline
+  - Must include `Status: Draft` immediately after the heading (see Status Field below)
   - Use bullet points instead of numbered lists for easy maintenance
   - Use 'points' instead of 'days' for timeline estimates
 - `adr.md`: Architecture Decision Record
@@ -89,3 +90,19 @@ Each plan (top-level or sub-plan) will contain:
   - Documents decisions made after struggling with difficult choices between alternatives
 
 **Important**: When `adr.md` exists, the `README.md` must reflect and be consistent with the decisions made in the ADR. Any technical approaches, implementation methods, or architectural choices documented in the ADR should be accurately represented in the planning document to avoid contradictions.
+
+## Status Field
+
+Every plan README.md must include a `Status` line immediately after the `#` heading:
+
+```markdown
+# Plan Title
+
+Status: Draft
+```
+
+Valid values:
+- `Draft` — Plan is being written, not yet reviewed
+- `Open` — Plan is reviewed and ready for implementation
+- `Completed` — Plan has been fully implemented
+- `Cancelled` — Plan was abandoned

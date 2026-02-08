@@ -20,6 +20,7 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 - Analyze documents from multiple review perspectives
 - Identify open questions that need clarification
 - Provide structured feedback with specific issues and suggestions
+- If the review assessment is "Ready" and the user approves, change the plan's `Status:` from `Draft` to `Open`
 
 ## Review Perspectives
 
@@ -100,6 +101,7 @@ Provide feedback in the following structure:
 - [ ] Implementation details are clear
 - [ ] Scope is well-defined
 - [ ] Sub-plans are consistent with parent plan (if applicable)
+- [ ] README.md has a `Status:` line after the heading
 ```
 
 ## Example Usage
