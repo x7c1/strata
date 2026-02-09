@@ -75,6 +75,46 @@ assert_valid "refactor/2026-18-layer-architecture"
 assert_valid "refactor/2026-1-cleanup-code"
 
 echo ""
+echo "=== Testing plan_exists ==="
+
+# Create temp directory structure for testing
+TEMP_PROJECT=$(mktemp -d)
+mkdir -p "$TEMP_PROJECT/docs/plans/2026/1-add-dark-mode"
+mkdir -p "$TEMP_PROJECT/docs/plans/2026/18-refactor-api"
+
+assert_plan_exists() {
+    local branch="$1"
+    local project_root="$2"
+    if plan_exists "$branch" "$project_root"; then
+        echo -e "${GREEN}PASS${NC}: plan exists for '$branch'"
+        ((++PASS))
+    else
+        echo -e "${RED}FAIL${NC}: plan should exist for '$branch'"
+        ((++FAIL))
+    fi
+}
+
+assert_plan_not_exists() {
+    local branch="$1"
+    local project_root="$2"
+    if ! plan_exists "$branch" "$project_root"; then
+        echo -e "${GREEN}PASS${NC}: no plan for '$branch'"
+        ((++PASS))
+    else
+        echo -e "${RED}FAIL${NC}: plan should not exist for '$branch'"
+        ((++FAIL))
+    fi
+}
+
+assert_plan_exists "feature/2026-1-add-dark-mode" "$TEMP_PROJECT"
+assert_plan_exists "refactor/2026-18-refactor-api" "$TEMP_PROJECT"
+assert_plan_not_exists "feature/2026-99-nonexistent-plan" "$TEMP_PROJECT"
+assert_plan_not_exists "feature/2026-2-wrong-number" "$TEMP_PROJECT"
+
+# Cleanup
+rm -rf "$TEMP_PROJECT"
+
+echo ""
 echo "=== Testing invalid patterns ==="
 
 assert_invalid "main"

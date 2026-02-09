@@ -18,6 +18,40 @@ is_task_branch_name() {
     [[ "$branch" =~ $PATTERN_TASK ]]
 }
 
+# Extract the plan number from a task branch name
+# e.g., "feature/2026-18-layer-architecture" -> "18"
+get_plan_number() {
+    local branch="$1"
+    if [[ "$branch" =~ ^[a-z]+/[0-9]{4}-([0-9]+)- ]]; then
+        echo "${BASH_REMATCH[1]}"
+    fi
+}
+
+# Extract the year from a task branch name
+# e.g., "feature/2026-18-layer-architecture" -> "2026"
+get_plan_year() {
+    local branch="$1"
+    if [[ "$branch" =~ ^[a-z]+/([0-9]{4})- ]]; then
+        echo "${BASH_REMATCH[1]}"
+    fi
+}
+
+# Check if the plan referenced by a task branch exists in docs/plans/
+# Searches for docs/plans/{year}/{number}-*/
+plan_exists() {
+    local branch="$1"
+    local project_root="${2:-$CLAUDE_PROJECT_DIR}"
+    local year number
+    year=$(get_plan_year "$branch")
+    number=$(get_plan_number "$branch")
+    if [[ -z "$year" || -z "$number" ]]; then
+        return 1
+    fi
+    local matches
+    matches=$(find "$project_root/docs/plans/$year" -maxdepth 1 -type d -name "${number}-*" 2>/dev/null)
+    [[ -n "$matches" ]]
+}
+
 # Check if branch name is valid (matches any allowed pattern)
 is_valid_branch_name() {
     local branch="$1"
