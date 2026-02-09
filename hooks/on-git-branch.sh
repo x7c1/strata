@@ -18,16 +18,15 @@ BRANCH_NAME=$(get_branch_name "$COMMAND")
 # Validate branch name
 if [[ -n "$BRANCH_NAME" ]]; then
   if is_valid_branch_name "$BRANCH_NAME"; then
-    # For task branches, verify the plan exists
-    if is_task_branch_name "$BRANCH_NAME" && ! plan_exists "$BRANCH_NAME"; then
-      PLAN_NUMBER=$(get_plan_number "$BRANCH_NAME")
-      PLAN_YEAR=$(get_plan_year "$BRANCH_NAME")
+    # For implementation branches (not plan/), verify the plan exists
+    if is_implementation_branch_name "$BRANCH_NAME" && ! plan_exists "$BRANCH_NAME"; then
+      EXPECTED_PATH=$(resolve_plan_path "$BRANCH_NAME" "$CLAUDE_PROJECT_DIR")
       cat << EOF >&2
 ERROR: No plan found for branch '$BRANCH_NAME'.
 
-No matching directory found in \`docs/plans/${PLAN_YEAR}/${PLAN_NUMBER}-*/\`.
+No matching directory found at \`${EXPECTED_PATH#"$CLAUDE_PROJECT_DIR/"}\`.
 
-Task-based branches must reference an existing plan. If this is exploratory work, use the date format instead:
+Implementation branches must reference an existing plan. If this is exploratory work, use the date format instead:
 - Format: \`YYYY-MM-DD_HHMM\`
 - Example: \`$(date '+%Y-%m-%d_%H%M')\`
 EOF
