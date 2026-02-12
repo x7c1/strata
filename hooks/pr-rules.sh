@@ -71,6 +71,9 @@ print_body_rules() {
 ## Bug Fixes
 - [ ] Bug fix description
 
+## Documentation
+- Documentation description
+
 ## Refactoring
 - Refactoring description
 
@@ -80,10 +83,11 @@ print_body_rules() {
 
 **Rules**:
 - Use checkboxes (`- [ ]`) for New Features and Bug Fixes
-- Use regular bullets (`-`) for Refactoring and Breaking Changes
+- Use regular bullets (`-`) for Documentation, Refactoring and Breaking Changes
 - Skip sections with no items
 - Keep descriptions concise
 - "Bug Fixes" and "Refactoring" are only for pre-existing code. Do not list changes to code introduced within this PR.
+- "Documentation" is for changes to documentation files (README, guides, etc.) that are not part of a new feature.
 EOF
 }
 
@@ -220,6 +224,7 @@ ERROR: PR body is required.
 Required sections (include at least one):
 - ## New Features
 - ## Bug Fixes
+- ## Documentation
 - ## Refactoring
 - ## Breaking Changes
 EOF
@@ -227,7 +232,7 @@ EOF
     fi
 
     # Check for valid section headers
-    local valid_sections="## New Features|## Bug Fixes|## Refactoring|## Breaking Changes"
+    local valid_sections="## New Features|## Bug Fixes|## Documentation|## Refactoring|## Breaking Changes"
     if ! echo "$body" | grep -qE "$valid_sections"; then
         cat >&2 << 'EOF'
 ERROR: PR body must contain at least one valid section header.
@@ -260,6 +265,7 @@ ERROR: PR body contains forbidden section header: "## $pattern"
 Use the required sections instead:
 - ## New Features
 - ## Bug Fixes
+- ## Documentation
 - ## Refactoring
 - ## Breaking Changes
 EOF
