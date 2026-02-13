@@ -2,6 +2,9 @@
 
 set -e
 
+# Resolve script directory before any cd changes the working directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -226,9 +229,7 @@ create_repository() {
 # Copy infrastructure files to repository
 copy_infrastructure_files() {
     local temp_dir="$1"
-    local script_dir
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    local templates_dir="$script_dir/templates"
+    local templates_dir="$SCRIPT_DIR/templates"
 
     print_debug "Copying infrastructure files from: $templates_dir"
 
