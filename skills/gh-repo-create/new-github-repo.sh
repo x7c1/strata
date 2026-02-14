@@ -23,9 +23,7 @@ ALLOW_SQUASH_MERGE="true"
 ALLOW_MERGE_COMMIT="false"
 ALLOW_REBASE_MERGE="false"
 REQUIRED_APPROVING_REVIEW_COUNT="1"
-REQUIRE_STATUS_CHECKS="true"
 ALLOW_FORCE_PUSHES="false"
-ENFORCE_ADMINS="true"
 
 # Main function
 main() {
@@ -71,9 +69,9 @@ main() {
     print_info "Configuring repository settings..."
     configure_repository_settings
 
-    # Apply branch protection rules
-    print_info "Applying branch protection rules..."
-    apply_branch_protection
+    # Apply ruleset
+    print_info "Applying ruleset..."
+    apply_ruleset
 
     print_success "Repository '$REPO_NAME' created and configured successfully!"
     print_info "Repository URL: https://github.com/$REPO_OWNER/$REPO_NAME"
@@ -101,7 +99,7 @@ show_usage() {
     cat << EOF
 Usage: $(basename "$0") CONFIG_FILE
 
-Create a new GitHub repository with predefined settings and branch protection rules.
+Create a new GitHub repository with predefined settings and rulesets.
 
 Arguments:
     CONFIG_FILE    Path to YAML configuration file
@@ -175,11 +173,9 @@ parse_yaml() {
     ALLOW_MERGE_COMMIT=$(yq -r '.merge_methods.allow_merge_commit // "false"' "$config_file")
     ALLOW_REBASE_MERGE=$(yq -r '.merge_methods.allow_rebase_merge // "false"' "$config_file")
 
-    # Parse branch_protection section
-    REQUIRED_APPROVING_REVIEW_COUNT=$(yq -r '.branch_protection.required_approving_review_count // "1"' "$config_file")
-    REQUIRE_STATUS_CHECKS=$(yq -r '.branch_protection.require_status_checks // "true"' "$config_file")
-    ALLOW_FORCE_PUSHES=$(yq -r '.branch_protection.allow_force_pushes // "false"' "$config_file")
-    ENFORCE_ADMINS=$(yq -r '.branch_protection.enforce_admins // "true"' "$config_file")
+    # Parse ruleset section
+    REQUIRED_APPROVING_REVIEW_COUNT=$(yq -r '.ruleset.required_approving_review_count // "1"' "$config_file")
+    ALLOW_FORCE_PUSHES=$(yq -r '.ruleset.allow_force_pushes // "false"' "$config_file")
 
     print_debug "Configuration parsed successfully"
 }
@@ -374,53 +370,66 @@ configure_repository_settings() {
     print_debug "Repository settings configured"
 }
 
-# Apply branch protection rules
-apply_branch_protection() {
-    # Check if branch exists before applying protection
+# Apply ruleset to default branch
+apply_ruleset() {
+    # Check if branch exists before applying ruleset
     if ! gh api "repos/$REPO_OWNER/$REPO_NAME/branches/$DEFAULT_BRANCH" &> /dev/null; then
-        print_info "Branch '$DEFAULT_BRANCH' does not exist yet, skipping branch protection"
+        print_info "Branch '$DEFAULT_BRANCH' does not exist yet, skipping ruleset"
         return 0
     fi
 
-    # Convert boolean strings to JSON boolean values
-    local require_status_checks_json
-    local allow_force_pushes_json
-    local enforce_admins_json
+    # Build rules array
+    local rules='[]'
 
-    [[ "$REQUIRE_STATUS_CHECKS" == "true" ]] && require_status_checks_json="true" || require_status_checks_json="false"
-    [[ "$ALLOW_FORCE_PUSHES" == "true" ]] && allow_force_pushes_json="true" || allow_force_pushes_json="false"
-    [[ "$ENFORCE_ADMINS" == "true" ]] && enforce_admins_json="true" || enforce_admins_json="false"
+    # Add pull request review requirement
+    rules=$(echo "$rules" | jq --argjson count "$REQUIRED_APPROVING_REVIEW_COUNT" '. + [{
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": $count,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false
+      }
+    }]')
 
-    # Build JSON payload for branch protection
-    # Note: 'restrictions' is only available for GitHub Pro/Team/Enterprise accounts
+    # Add force push prevention (non_fast_forward) unless explicitly allowed
+    if [[ "$ALLOW_FORCE_PUSHES" != "true" ]]; then
+        rules=$(echo "$rules" | jq '. + [{"type": "non_fast_forward"}]')
+    fi
+
+    # Add branch deletion prevention
+    rules=$(echo "$rules" | jq '. + [{"type": "deletion"}]')
+
+    # Build full payload
     local json_payload
-    json_payload=$(cat <<EOF
-{
-  "required_status_checks": $([ "$require_status_checks_json" = "true" ] && echo '{"strict": true, "contexts": []}' || echo 'null'),
-  "enforce_admins": $enforce_admins_json,
-  "required_pull_request_reviews": {
-    "required_approving_review_count": $REQUIRED_APPROVING_REVIEW_COUNT,
-    "dismiss_stale_reviews": false,
-    "require_code_owner_reviews": false
-  },
-  "restrictions": null,
-  "allow_force_pushes": $allow_force_pushes_json,
-  "allow_deletions": false,
-  "required_conversation_resolution": false
-}
-EOF
-)
+    json_payload=$(jq -n \
+      --arg name "$DEFAULT_BRANCH branch protection" \
+      --arg branch "refs/heads/$DEFAULT_BRANCH" \
+      --argjson rules "$rules" \
+      '{
+        "name": $name,
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [$branch],
+            "exclude": []
+          }
+        },
+        "rules": $rules
+      }')
 
-    # Apply branch protection rules
-    if ! gh api -X PUT "/repos/$REPO_OWNER/$REPO_NAME/branches/$DEFAULT_BRANCH/protection" \
+    # Apply ruleset
+    if ! gh api -X POST "/repos/$REPO_OWNER/$REPO_NAME/rulesets" \
         --input - <<< "$json_payload" > /dev/null 2>&1; then
-        print_error "Failed to apply branch protection rules"
-        print_info "This might be due to account limitations (free accounts have limited branch protection features)"
-        print_info "You can manually configure branch protection in the GitHub repository settings"
+        print_error "Failed to apply ruleset"
+        print_info "This might be due to account limitations (free accounts have limited ruleset features for private repos)"
+        print_info "You can manually configure rulesets in the GitHub repository settings"
         return 1
     fi
 
-    print_debug "Branch protection rules applied to $DEFAULT_BRANCH"
+    print_debug "Ruleset applied to $DEFAULT_BRANCH"
 }
 
 # Call main function with all arguments

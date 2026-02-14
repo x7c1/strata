@@ -5,7 +5,7 @@ context: fork
 
 # New GitHub Repository Skill
 
-Creates a new GitHub repository with predefined settings, branch protection rules, and infrastructure setup (Dockerfile, docker-compose.yml, Makefile).
+Creates a new GitHub repository with predefined settings, rulesets, and infrastructure setup (Dockerfile, docker-compose.yml, Makefile).
 
 ## Instructions
 
@@ -32,11 +32,9 @@ merge_methods:
   allow_squash_merge: true
   allow_merge_commit: false
   allow_rebase_merge: false
-branch_protection:
+ruleset:
   required_approving_review_count: 1
-  require_status_checks: true
   allow_force_pushes: false
-  enforce_admins: true
 ```
 
 Run the script:
