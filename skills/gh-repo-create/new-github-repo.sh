@@ -23,6 +23,7 @@ ALLOW_SQUASH_MERGE="true"
 ALLOW_MERGE_COMMIT="false"
 ALLOW_REBASE_MERGE="false"
 REQUIRED_APPROVING_REVIEW_COUNT="1"
+REQUIRE_STATUS_CHECKS="false"
 ALLOW_FORCE_PUSHES="false"
 
 # Main function
@@ -175,6 +176,7 @@ parse_yaml() {
 
     # Parse ruleset section
     REQUIRED_APPROVING_REVIEW_COUNT=$(yq -r '.ruleset.required_approving_review_count // "1"' "$config_file")
+    REQUIRE_STATUS_CHECKS=$(yq -r '.ruleset.require_status_checks // "false"' "$config_file")
     ALLOW_FORCE_PUSHES=$(yq -r '.ruleset.allow_force_pushes // "false"' "$config_file")
 
     print_debug "Configuration parsed successfully"
@@ -392,6 +394,18 @@ apply_ruleset() {
         "required_review_thread_resolution": false
       }
     }]')
+
+    # Add required status checks if enabled
+    if [[ "$REQUIRE_STATUS_CHECKS" == "true" ]]; then
+        rules=$(echo "$rules" | jq '. + [{
+          "type": "required_status_checks",
+          "parameters": {
+            "required_status_checks": [],
+            "strict_required_status_checks_policy": true,
+            "do_not_enforce_on_create": false
+          }
+        }]')
+    fi
 
     # Add force push prevention (non_fast_forward) unless explicitly allowed
     if [[ "$ALLOW_FORCE_PUSHES" != "true" ]]; then
