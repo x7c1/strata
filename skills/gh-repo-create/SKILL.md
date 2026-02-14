@@ -34,7 +34,7 @@ merge_methods:
   allow_rebase_merge: false
 ruleset:
   required_approving_review_count: 1
-  require_status_checks: false
+  require_status_checks: true
   allow_force_pushes: false
 ```
 
