@@ -5,10 +5,15 @@ context: fork
 
 # New GitHub Repository Skill
 
-Creates a new GitHub repository with predefined settings, branch protection rules, and infrastructure setup (Dockerfile, docker-compose.yml, Makefile).
+Creates a new GitHub repository with predefined settings, rulesets, and infrastructure setup (Dockerfile, docker-compose.yml, Makefile).
 
 ## Instructions
 
+- Determine repository owner by asking the user:
+  - Run `gh api user --jq '.login'` to get the authenticated user
+  - Run `gh api user/orgs --jq '.[].login'` to list available organizations
+  - Present the options (personal account + organizations) and ask the user where to create the repository
+  - Set the chosen owner in the `owner` field of the YAML configuration
 - Create YAML configuration file with repository settings
 - Before running the script, prepare Dockerfile from template:
   - Check latest Rust version: https://hub.docker.com/_/rust
@@ -24,6 +29,7 @@ Creates a new GitHub repository with predefined settings, branch protection rule
 Create configuration file (example.yaml):
 ```yaml
 name: my-repo
+owner: my-org
 description: My new repository
 visibility: public
 default_branch: main
@@ -32,11 +38,12 @@ merge_methods:
   allow_squash_merge: true
   allow_merge_commit: false
   allow_rebase_merge: false
-branch_protection:
+ruleset:
   required_approving_review_count: 1
   require_status_checks: true
+  status_checks:
+    - "ci/build"
   allow_force_pushes: false
-  enforce_admins: true
 ```
 
 Run the script:

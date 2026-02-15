@@ -202,6 +202,9 @@ assert_exit_code "Valid body with ## Bug Fixes passes" 0 \
 assert_exit_code "Valid body with ## New Features passes" 0 \
     run_validate_body_format 'gh pr create --body "## New Features" --draft'
 
+assert_exit_code "Valid body with ## Documentation passes" 0 \
+    run_validate_body_format 'gh pr create --body "## Documentation" --draft'
+
 assert_exit_code "Valid body with ## Refactoring passes" 0 \
     run_validate_body_format 'gh pr create --body "## Refactoring" --draft'
 

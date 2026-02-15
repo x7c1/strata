@@ -5,8 +5,8 @@ set -euo pipefail
 
 echo "Installing common Ubuntu system dependencies..."
 
-sudo apt-get update
-sudo apt-get install -y \
+apt-get update
+apt-get install -y \
     build-essential \
     curl \
     pkg-config \

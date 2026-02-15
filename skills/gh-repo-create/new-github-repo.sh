@@ -2,6 +2,9 @@
 
 set -e
 
+# Resolve script directory before any cd changes the working directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -14,6 +17,7 @@ REPO_NAME=""
 REPO_DESCRIPTION=""
 REPO_VISIBILITY="public"
 REPO_OWNER=""
+REPO_OWNER_CONFIG=""
 DEFAULT_BRANCH="main"
 DELETE_BRANCH_ON_MERGE="true"
 ALLOW_SQUASH_MERGE="true"
@@ -21,8 +25,8 @@ ALLOW_MERGE_COMMIT="false"
 ALLOW_REBASE_MERGE="false"
 REQUIRED_APPROVING_REVIEW_COUNT="1"
 REQUIRE_STATUS_CHECKS="true"
+REQUIRED_STATUS_CHECK_CONTEXTS=()
 ALLOW_FORCE_PUSHES="false"
-ENFORCE_ADMINS="true"
 
 # Main function
 main() {
@@ -45,13 +49,17 @@ main() {
     # Check prerequisites
     check_prerequisites
 
-    # Get repository owner (once)
-    REPO_OWNER=$(get_repo_owner)
-    print_debug "Repository owner: $REPO_OWNER"
-
     # Parse YAML configuration
     print_info "Parsing configuration file: $config_file"
     parse_yaml "$config_file"
+
+    # Determine repository owner
+    if [ -n "$REPO_OWNER_CONFIG" ]; then
+        REPO_OWNER="$REPO_OWNER_CONFIG"
+    else
+        REPO_OWNER=$(get_repo_owner)
+    fi
+    print_debug "Repository owner: $REPO_OWNER"
 
     # Validate configuration
     validate_config
@@ -68,9 +76,9 @@ main() {
     print_info "Configuring repository settings..."
     configure_repository_settings
 
-    # Apply branch protection rules
-    print_info "Applying branch protection rules..."
-    apply_branch_protection
+    # Apply ruleset
+    print_info "Applying ruleset..."
+    apply_ruleset
 
     print_success "Repository '$REPO_NAME' created and configured successfully!"
     print_info "Repository URL: https://github.com/$REPO_OWNER/$REPO_NAME"
@@ -98,7 +106,7 @@ show_usage() {
     cat << EOF
 Usage: $(basename "$0") CONFIG_FILE
 
-Create a new GitHub repository with predefined settings and branch protection rules.
+Create a new GitHub repository with predefined settings and rulesets.
 
 Arguments:
     CONFIG_FILE    Path to YAML configuration file
@@ -163,6 +171,7 @@ parse_yaml() {
     # Parse top-level fields
     REPO_NAME=$(yq -r '.name // ""' "$config_file")
     REPO_DESCRIPTION=$(yq -r '.description // ""' "$config_file")
+    REPO_OWNER_CONFIG=$(yq -r '.owner // ""' "$config_file")
     REPO_VISIBILITY=$(yq -r '.visibility // "public"' "$config_file")
     DEFAULT_BRANCH=$(yq -r '.default_branch // "main"' "$config_file")
     DELETE_BRANCH_ON_MERGE=$(yq -r '.delete_branch_on_merge // "true"' "$config_file")
@@ -172,11 +181,20 @@ parse_yaml() {
     ALLOW_MERGE_COMMIT=$(yq -r '.merge_methods.allow_merge_commit // "false"' "$config_file")
     ALLOW_REBASE_MERGE=$(yq -r '.merge_methods.allow_rebase_merge // "false"' "$config_file")
 
-    # Parse branch_protection section
-    REQUIRED_APPROVING_REVIEW_COUNT=$(yq -r '.branch_protection.required_approving_review_count // "1"' "$config_file")
-    REQUIRE_STATUS_CHECKS=$(yq -r '.branch_protection.require_status_checks // "true"' "$config_file")
-    ALLOW_FORCE_PUSHES=$(yq -r '.branch_protection.allow_force_pushes // "false"' "$config_file")
-    ENFORCE_ADMINS=$(yq -r '.branch_protection.enforce_admins // "true"' "$config_file")
+    # Parse ruleset section
+    REQUIRED_APPROVING_REVIEW_COUNT=$(yq -r '.ruleset.required_approving_review_count // "1"' "$config_file")
+    REQUIRE_STATUS_CHECKS=$(yq -r '.ruleset.require_status_checks // "false"' "$config_file")
+    ALLOW_FORCE_PUSHES=$(yq -r '.ruleset.allow_force_pushes // "false"' "$config_file")
+
+    # Parse status check contexts (optional list)
+    REQUIRED_STATUS_CHECK_CONTEXTS=()
+    local check_count
+    check_count=$(yq -r '.ruleset.status_checks // [] | length' "$config_file")
+    for ((i=0; i<check_count; i++)); do
+        local ctx
+        ctx=$(yq -r ".ruleset.status_checks[$i]" "$config_file")
+        REQUIRED_STATUS_CHECK_CONTEXTS+=("$ctx")
+    done
 
     print_debug "Configuration parsed successfully"
 }
@@ -213,11 +231,13 @@ create_repository() {
         description_flag="--description"
     fi
 
+    local full_name="$REPO_OWNER/$REPO_NAME"
+
     # Create repository
     if [ -n "$description_flag" ]; then
-        gh repo create "$REPO_NAME" "$visibility_flag" "$description_flag" "$REPO_DESCRIPTION"
+        gh repo create "$full_name" "$visibility_flag" "$description_flag" "$REPO_DESCRIPTION"
     else
-        gh repo create "$REPO_NAME" "$visibility_flag"
+        gh repo create "$full_name" "$visibility_flag"
     fi
 
     print_debug "Repository created: $REPO_NAME"
@@ -226,9 +246,7 @@ create_repository() {
 # Copy infrastructure files to repository
 copy_infrastructure_files() {
     local temp_dir="$1"
-    local script_dir
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    local templates_dir="$script_dir/templates"
+    local templates_dir="$SCRIPT_DIR/templates"
 
     print_debug "Copying infrastructure files from: $templates_dir"
 
@@ -238,10 +256,10 @@ copy_infrastructure_files() {
         print_debug "Copied Dockerfile"
     fi
 
-    # Copy docker-compose.yml
+    # Copy docker-compose.yml and replace project name placeholder
     if [ -f "$templates_dir/docker-compose.yml" ]; then
-        cp "$templates_dir/docker-compose.yml" "$temp_dir/repo/"
-        print_debug "Copied docker-compose.yml"
+        sed "s/__PROJECT_NAME__/$REPO_NAME/g" "$templates_dir/docker-compose.yml" > "$temp_dir/repo/docker-compose.yml"
+        print_debug "Copied docker-compose.yml (project name: $REPO_NAME)"
     fi
 
     # Copy Makefile
@@ -267,11 +285,6 @@ copy_infrastructure_files() {
         cp "$templates_dir/scripts/setup-claude-container.sh" "$temp_dir/repo/scripts/"
         chmod +x "$temp_dir/repo/scripts/setup-claude-container.sh"
         print_debug "Copied scripts/setup-claude-container.sh"
-    fi
-    if [ -f "$templates_dir/scripts/setup-claude-role.sh" ]; then
-        cp "$templates_dir/scripts/setup-claude-role.sh" "$temp_dir/repo/scripts/"
-        chmod +x "$temp_dir/repo/scripts/setup-claude-role.sh"
-        print_debug "Copied scripts/setup-claude-role.sh"
     fi
     if [ -f "$templates_dir/scripts/start-claude-code.sh" ]; then
         cp "$templates_dir/scripts/start-claude-code.sh" "$temp_dir/repo/scripts/"
@@ -373,53 +386,84 @@ configure_repository_settings() {
     print_debug "Repository settings configured"
 }
 
-# Apply branch protection rules
-apply_branch_protection() {
-    # Check if branch exists before applying protection
+# Apply ruleset to default branch
+apply_ruleset() {
+    # Check if branch exists before applying ruleset
     if ! gh api "repos/$REPO_OWNER/$REPO_NAME/branches/$DEFAULT_BRANCH" &> /dev/null; then
-        print_info "Branch '$DEFAULT_BRANCH' does not exist yet, skipping branch protection"
+        print_info "Branch '$DEFAULT_BRANCH' does not exist yet, skipping ruleset"
         return 0
     fi
 
-    # Convert boolean strings to JSON boolean values
-    local require_status_checks_json
-    local allow_force_pushes_json
-    local enforce_admins_json
+    # Build rules array
+    local rules='[]'
 
-    [[ "$REQUIRE_STATUS_CHECKS" == "true" ]] && require_status_checks_json="true" || require_status_checks_json="false"
-    [[ "$ALLOW_FORCE_PUSHES" == "true" ]] && allow_force_pushes_json="true" || allow_force_pushes_json="false"
-    [[ "$ENFORCE_ADMINS" == "true" ]] && enforce_admins_json="true" || enforce_admins_json="false"
+    # Add pull request review requirement
+    rules=$(echo "$rules" | jq --argjson count "$REQUIRED_APPROVING_REVIEW_COUNT" '. + [{
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": $count,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false
+      }
+    }]')
 
-    # Build JSON payload for branch protection
-    # Note: 'restrictions' is only available for GitHub Pro/Team/Enterprise accounts
+    # Add required status checks if enabled (requires at least one check)
+    if [[ "$REQUIRE_STATUS_CHECKS" == "true" ]]; then
+        if [ ${#REQUIRED_STATUS_CHECK_CONTEXTS[@]} -gt 0 ]; then
+            local checks_json
+            checks_json=$(printf '%s\n' "${REQUIRED_STATUS_CHECK_CONTEXTS[@]}" | jq -R '{context: .}' | jq -s '.')
+            rules=$(echo "$rules" | jq --argjson checks "$checks_json" '. + [{
+              "type": "required_status_checks",
+              "parameters": {
+                "required_status_checks": $checks,
+                "strict_required_status_checks_policy": true,
+                "do_not_enforce_on_create": false
+              }
+            }]')
+        else
+            print_info "Skipping required_status_checks rule: no status checks configured. Add them to the ruleset after setting up CI."
+        fi
+    fi
+
+    # Add force push prevention (non_fast_forward) unless explicitly allowed
+    if [[ "$ALLOW_FORCE_PUSHES" != "true" ]]; then
+        rules=$(echo "$rules" | jq '. + [{"type": "non_fast_forward"}]')
+    fi
+
+    # Add branch deletion prevention
+    rules=$(echo "$rules" | jq '. + [{"type": "deletion"}]')
+
+    # Build full payload
     local json_payload
-    json_payload=$(cat <<EOF
-{
-  "required_status_checks": $([ "$require_status_checks_json" = "true" ] && echo '{"strict": true, "contexts": []}' || echo 'null'),
-  "enforce_admins": $enforce_admins_json,
-  "required_pull_request_reviews": {
-    "required_approving_review_count": $REQUIRED_APPROVING_REVIEW_COUNT,
-    "dismiss_stale_reviews": false,
-    "require_code_owner_reviews": false
-  },
-  "restrictions": null,
-  "allow_force_pushes": $allow_force_pushes_json,
-  "allow_deletions": false,
-  "required_conversation_resolution": false
-}
-EOF
-)
+    json_payload=$(jq -n \
+      --arg name "$DEFAULT_BRANCH branch protection" \
+      --arg branch "refs/heads/$DEFAULT_BRANCH" \
+      --argjson rules "$rules" \
+      '{
+        "name": $name,
+        "target": "branch",
+        "enforcement": "active",
+        "conditions": {
+          "ref_name": {
+            "include": [$branch],
+            "exclude": []
+          }
+        },
+        "rules": $rules
+      }')
 
-    # Apply branch protection rules
-    if ! gh api -X PUT "/repos/$REPO_OWNER/$REPO_NAME/branches/$DEFAULT_BRANCH/protection" \
+    # Apply ruleset
+    if ! gh api -X POST "/repos/$REPO_OWNER/$REPO_NAME/rulesets" \
         --input - <<< "$json_payload" > /dev/null 2>&1; then
-        print_error "Failed to apply branch protection rules"
-        print_info "This might be due to account limitations (free accounts have limited branch protection features)"
-        print_info "You can manually configure branch protection in the GitHub repository settings"
+        print_error "Failed to apply ruleset"
+        print_info "This might be due to account limitations (free accounts have limited ruleset features for private repos)"
+        print_info "You can manually configure rulesets in the GitHub repository settings"
         return 1
     fi
 
-    print_debug "Branch protection rules applied to $DEFAULT_BRANCH"
+    print_debug "Ruleset applied to $DEFAULT_BRANCH"
 }
 
 # Call main function with all arguments

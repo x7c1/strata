@@ -1,20 +1,24 @@
 services:
   claude-code:
-    build: .
-    container_name: claude-code-${ROLE}
+    build:
+      context: .
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
+    container_name: claude-code
     volumes:
-      - .:/projects/${ROLE}
-      - ./claude.local/shared:/home/developer/.claude
-      - ./claude.local/shared/.claude.json:/home/developer/.claude.json
-      - ./claude.local/${ROLE}/.bash_history:/home/developer/.bash_history
+      - .:/projects/__PROJECT_NAME__
+      - ./claude.local/.claude:/home/developer/.claude
+      - ./claude.local/.claude.json:/home/developer/.claude.json
+      - ./claude.local/.bash_history:/home/developer/.bash_history
       - ~/.claude/CLAUDE.md:/home/developer/.claude/CLAUDE.md
       - ~/.claude/.credentials.json:/home/developer/.claude/.credentials.json
       - ~/.config/git:/home/developer/.config/git
       - ~/.config/gh:/home/developer/.config/gh
       - ~/.ssh:/home/developer/.ssh:ro
-      - ./claude.local/shared/.npm-global:/home/developer/.npm-global
-      - ./claude.local/shared/.local:/home/developer/.local
+      - ./claude.local/.npm-global:/home/developer/.npm-global
+      - ./claude.local/.local:/home/developer/.local
     stdin_open: true
     tty: true
-    working_dir: /projects/${ROLE}
-    command: bash -c "/projects/${ROLE}/vendor/strata/scripts/start-claude-code.sh; exec bash"
+    working_dir: /projects/__PROJECT_NAME__
+    command: bash -c "/projects/__PROJECT_NAME__/vendor/strata/scripts/start-claude-code.sh; exec bash"

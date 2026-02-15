@@ -18,6 +18,21 @@ BRANCH_NAME=$(get_branch_name "$COMMAND")
 # Validate branch name
 if [[ -n "$BRANCH_NAME" ]]; then
   if is_valid_branch_name "$BRANCH_NAME"; then
+    # For implementation branches (not plan/), verify the plan exists
+    if is_implementation_branch_name "$BRANCH_NAME" && ! plan_exists "$BRANCH_NAME"; then
+      REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "$CLAUDE_PROJECT_DIR")
+      EXPECTED_PATH=$(resolve_plan_path "$BRANCH_NAME" "$REPO_ROOT")
+      cat << EOF >&2
+ERROR: No plan found for branch '$BRANCH_NAME'.
+
+No matching directory found at \`${EXPECTED_PATH#"$REPO_ROOT/"}\`.
+
+Implementation branches must reference an existing plan. If this is exploratory work, use the date format instead:
+- Format: \`YYYY-MM-DD_HHMM\`
+- Example: \`$(date '+%Y-%m-%d_%H%M')\`
+EOF
+      exit 2
+    fi
     exit 0
   fi
 
