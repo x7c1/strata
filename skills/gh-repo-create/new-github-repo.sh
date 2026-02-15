@@ -17,6 +17,7 @@ REPO_NAME=""
 REPO_DESCRIPTION=""
 REPO_VISIBILITY="public"
 REPO_OWNER=""
+REPO_OWNER_CONFIG=""
 DEFAULT_BRANCH="main"
 DELETE_BRANCH_ON_MERGE="true"
 ALLOW_SQUASH_MERGE="true"
@@ -24,6 +25,7 @@ ALLOW_MERGE_COMMIT="false"
 ALLOW_REBASE_MERGE="false"
 REQUIRED_APPROVING_REVIEW_COUNT="1"
 REQUIRE_STATUS_CHECKS="true"
+REQUIRED_STATUS_CHECK_CONTEXTS=()
 ALLOW_FORCE_PUSHES="false"
 
 # Main function
@@ -47,13 +49,17 @@ main() {
     # Check prerequisites
     check_prerequisites
 
-    # Get repository owner (once)
-    REPO_OWNER=$(get_repo_owner)
-    print_debug "Repository owner: $REPO_OWNER"
-
     # Parse YAML configuration
     print_info "Parsing configuration file: $config_file"
     parse_yaml "$config_file"
+
+    # Determine repository owner
+    if [ -n "$REPO_OWNER_CONFIG" ]; then
+        REPO_OWNER="$REPO_OWNER_CONFIG"
+    else
+        REPO_OWNER=$(get_repo_owner)
+    fi
+    print_debug "Repository owner: $REPO_OWNER"
 
     # Validate configuration
     validate_config
@@ -165,6 +171,7 @@ parse_yaml() {
     # Parse top-level fields
     REPO_NAME=$(yq -r '.name // ""' "$config_file")
     REPO_DESCRIPTION=$(yq -r '.description // ""' "$config_file")
+    REPO_OWNER_CONFIG=$(yq -r '.owner // ""' "$config_file")
     REPO_VISIBILITY=$(yq -r '.visibility // "public"' "$config_file")
     DEFAULT_BRANCH=$(yq -r '.default_branch // "main"' "$config_file")
     DELETE_BRANCH_ON_MERGE=$(yq -r '.delete_branch_on_merge // "true"' "$config_file")
@@ -178,6 +185,16 @@ parse_yaml() {
     REQUIRED_APPROVING_REVIEW_COUNT=$(yq -r '.ruleset.required_approving_review_count // "1"' "$config_file")
     REQUIRE_STATUS_CHECKS=$(yq -r '.ruleset.require_status_checks // "false"' "$config_file")
     ALLOW_FORCE_PUSHES=$(yq -r '.ruleset.allow_force_pushes // "false"' "$config_file")
+
+    # Parse status check contexts (optional list)
+    REQUIRED_STATUS_CHECK_CONTEXTS=()
+    local check_count
+    check_count=$(yq -r '.ruleset.status_checks // [] | length' "$config_file")
+    for ((i=0; i<check_count; i++)); do
+        local ctx
+        ctx=$(yq -r ".ruleset.status_checks[$i]" "$config_file")
+        REQUIRED_STATUS_CHECK_CONTEXTS+=("$ctx")
+    done
 
     print_debug "Configuration parsed successfully"
 }
@@ -214,11 +231,13 @@ create_repository() {
         description_flag="--description"
     fi
 
+    local full_name="$REPO_OWNER/$REPO_NAME"
+
     # Create repository
     if [ -n "$description_flag" ]; then
-        gh repo create "$REPO_NAME" "$visibility_flag" "$description_flag" "$REPO_DESCRIPTION"
+        gh repo create "$full_name" "$visibility_flag" "$description_flag" "$REPO_DESCRIPTION"
     else
-        gh repo create "$REPO_NAME" "$visibility_flag"
+        gh repo create "$full_name" "$visibility_flag"
     fi
 
     print_debug "Repository created: $REPO_NAME"
@@ -395,16 +414,22 @@ apply_ruleset() {
       }
     }]')
 
-    # Add required status checks if enabled
+    # Add required status checks if enabled (requires at least one check)
     if [[ "$REQUIRE_STATUS_CHECKS" == "true" ]]; then
-        rules=$(echo "$rules" | jq '. + [{
-          "type": "required_status_checks",
-          "parameters": {
-            "required_status_checks": [],
-            "strict_required_status_checks_policy": true,
-            "do_not_enforce_on_create": false
-          }
-        }]')
+        if [ ${#REQUIRED_STATUS_CHECK_CONTEXTS[@]} -gt 0 ]; then
+            local checks_json
+            checks_json=$(printf '%s\n' "${REQUIRED_STATUS_CHECK_CONTEXTS[@]}" | jq -R '{context: .}' | jq -s '.')
+            rules=$(echo "$rules" | jq --argjson checks "$checks_json" '. + [{
+              "type": "required_status_checks",
+              "parameters": {
+                "required_status_checks": $checks,
+                "strict_required_status_checks_policy": true,
+                "do_not_enforce_on_create": false
+              }
+            }]')
+        else
+            print_info "Skipping required_status_checks rule: no status checks configured. Add them to the ruleset after setting up CI."
+        fi
     fi
 
     # Add force push prevention (non_fast_forward) unless explicitly allowed

@@ -9,6 +9,11 @@ Creates a new GitHub repository with predefined settings, rulesets, and infrastr
 
 ## Instructions
 
+- Determine repository owner by asking the user:
+  - Run `gh api user --jq '.login'` to get the authenticated user
+  - Run `gh api user/orgs --jq '.[].login'` to list available organizations
+  - Present the options (personal account + organizations) and ask the user where to create the repository
+  - Set the chosen owner in the `owner` field of the YAML configuration
 - Create YAML configuration file with repository settings
 - Before running the script, prepare Dockerfile from template:
   - Check latest Rust version: https://hub.docker.com/_/rust
@@ -24,6 +29,7 @@ Creates a new GitHub repository with predefined settings, rulesets, and infrastr
 Create configuration file (example.yaml):
 ```yaml
 name: my-repo
+owner: my-org
 description: My new repository
 visibility: public
 default_branch: main
@@ -35,6 +41,8 @@ merge_methods:
 ruleset:
   required_approving_review_count: 1
   require_status_checks: true
+  status_checks:
+    - "ci/build"
   allow_force_pushes: false
 ```
 
