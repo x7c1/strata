@@ -256,10 +256,10 @@ copy_infrastructure_files() {
         print_debug "Copied Dockerfile"
     fi
 
-    # Copy docker-compose.yml
+    # Copy docker-compose.yml and replace project name placeholder
     if [ -f "$templates_dir/docker-compose.yml" ]; then
-        cp "$templates_dir/docker-compose.yml" "$temp_dir/repo/"
-        print_debug "Copied docker-compose.yml"
+        sed "s/__PROJECT_NAME__/$REPO_NAME/g" "$templates_dir/docker-compose.yml" > "$temp_dir/repo/docker-compose.yml"
+        print_debug "Copied docker-compose.yml (project name: $REPO_NAME)"
     fi
 
     # Copy Makefile
@@ -285,11 +285,6 @@ copy_infrastructure_files() {
         cp "$templates_dir/scripts/setup-claude-container.sh" "$temp_dir/repo/scripts/"
         chmod +x "$temp_dir/repo/scripts/setup-claude-container.sh"
         print_debug "Copied scripts/setup-claude-container.sh"
-    fi
-    if [ -f "$templates_dir/scripts/setup-claude-role.sh" ]; then
-        cp "$templates_dir/scripts/setup-claude-role.sh" "$temp_dir/repo/scripts/"
-        chmod +x "$temp_dir/repo/scripts/setup-claude-role.sh"
-        print_debug "Copied scripts/setup-claude-role.sh"
     fi
     if [ -f "$templates_dir/scripts/start-claude-code.sh" ]; then
         cp "$templates_dir/scripts/start-claude-code.sh" "$temp_dir/repo/scripts/"

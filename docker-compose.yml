@@ -1,20 +1,20 @@
 services:
   claude-code:
     build: .
-    container_name: claude-code-${ROLE}
+    container_name: claude-code
     volumes:
-      - .:/projects/${ROLE}
-      - ./claude.local/shared:/home/developer/.claude
-      - ./claude.local/shared/.claude.json:/home/developer/.claude.json
-      - ./claude.local/${ROLE}/.bash_history:/home/developer/.bash_history
+      - .:/projects/strata
+      - ./claude.local/.claude:/home/developer/.claude
+      - ./claude.local/.claude.json:/home/developer/.claude.json
+      - ./claude.local/.bash_history:/home/developer/.bash_history
       - ~/.claude/CLAUDE.md:/home/developer/.claude/CLAUDE.md
       - ~/.claude/.credentials.json:/home/developer/.claude/.credentials.json
       - ~/.config/git:/home/developer/.config/git
       - ~/.config/gh:/home/developer/.config/gh
       - ~/.ssh:/home/developer/.ssh:ro
-      - ./claude.local/shared/.npm-global:/home/developer/.npm-global
-      - ./claude.local/shared/.local:/home/developer/.local
+      - ./claude.local/.npm-global:/home/developer/.npm-global
+      - ./claude.local/.local:/home/developer/.local
     stdin_open: true
     tty: true
-    working_dir: /projects/${ROLE}
-    command: bash -c "/projects/${ROLE}/scripts/start-claude-code.sh; exec bash"
+    working_dir: /projects/strata
+    command: bash -c "/projects/strata/scripts/start-claude-code.sh; exec bash"
