@@ -65,7 +65,7 @@ resolve_plan_path() {
 # Check if the plan referenced by a task branch exists in docs/plans/
 plan_exists() {
     local branch="$1"
-    local project_root="${2:-$CLAUDE_PROJECT_DIR}"
+    local project_root="${2:-$(git rev-parse --show-toplevel 2>/dev/null || echo "$CLAUDE_PROJECT_DIR")}"
     local glob_path
     glob_path=$(resolve_plan_path "$branch" "$project_root")
     # Use compgen to check if glob matches any directory
