@@ -1,6 +1,10 @@
 services:
   claude-code:
-    build: .
+    build:
+      context: .
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
     container_name: claude-code
     volumes:
       - .:/projects/strata

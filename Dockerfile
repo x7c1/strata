@@ -27,9 +27,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user
-RUN groupadd -g 1000 developer && \
-    useradd -m -u 1000 -g 1000 -s /bin/zsh developer && \
+# Create a non-root user with host UID/GID
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+RUN groupadd -g $HOST_GID developer && \
+    useradd -m -u $HOST_UID -g $HOST_GID -s /bin/zsh developer && \
     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Set working directory

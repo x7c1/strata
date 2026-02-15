@@ -1,3 +1,6 @@
+export HOST_UID := $(shell id -u)
+export HOST_GID := $(shell id -g)
+
 .PHONY: help claude-setup claude-run workspace
 
 .DEFAULT_GOAL := help
