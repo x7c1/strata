@@ -57,8 +57,11 @@ Intermediate parents use their number only; the last segment (target plan) inclu
   - If this is a sub-plan, also read the parent plan for context
 
 - **Step 2: Branch**
-  - If on the main branch: create a new branch following the naming convention above and switch to it
-  - If on any other branch: stay on the current branch (implementation continues on the existing branch)
+  - If on the main branch: pull latest, then create a new branch following the naming convention above and switch to it
+  - If on a feature branch:
+    - Check if the branch has a PR that is merged (`gh pr view --json state -q '.state'`)
+    - If merged: checkout main, pull latest, then create a new branch and switch to it
+    - If not merged (open/draft): stay on the current branch (implementation continues on the existing branch)
 
 - **Step 3: Implement**
   - Follow the plan document step by step
