@@ -9,7 +9,7 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 
 ## Arguments
 
-- `$0`: Path to the plan directory (e.g., `docs/plans/2026/1-add-feature/`)
+- `$0`: Path to the plan directory (e.g., `docs/plans/2026/001-add-feature/`)
   - If not provided, uses current branch to determine plan path
 
 ## Instructions
@@ -107,7 +107,7 @@ Provide feedback in the following structure:
 ## Example Usage
 
 ```
-/review-plan docs/plans/2026/1-add-dark-mode/
+/review-plan docs/plans/2026/001-add-dark-mode/
 ```
 
 Or, when on a plan branch:

@@ -135,11 +135,12 @@ else
     ((++FAIL))
 fi
 
-if echo "$output" | grep -q "docs/plans/2026/17-subscription-licensing/"; then
-    echo -e "${GREEN}PASS${NC}: Related plan section contains correct plan link"
+if echo "$output" | grep -q "docs/plans/2026/017-subscription-licensing/"; then
+    echo -e "${GREEN}PASS${NC}: Related plan section contains correct zero-padded plan link"
     ((++PASS))
 else
-    echo -e "${RED}FAIL${NC}: Related plan section missing plan link"
+    echo -e "${RED}FAIL${NC}: Related plan section missing zero-padded plan link"
+    echo "$output"
     ((++FAIL))
 fi
 

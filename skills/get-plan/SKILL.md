@@ -26,17 +26,17 @@ Recognized branch prefixes: `plan/`, `feature/`, `fix/`
 
 | Branch Format | Plan Path |
 |---------------|-----------|
-| `{prefix}{year}-{number}-{description}` | `docs/plans/{year}/{number}-{description}/README.md` |
+| `{prefix}{year}-{number}-{description}` | `docs/plans/{year}/{zero-padded-number}-{description}/README.md` |
 
 ### Sub-Plans (Nested)
 
 | Branch Format | Plan Path |
 |---------------|-----------|
-| `{prefix}{year}-{number}/{sub-number}-{sub-desc}` | `docs/plans/{year}/{number}-*/plans/{sub-number}-{sub-desc}/README.md` |
-| `{prefix}{year}-{number}/{sub-number}/{subsub-number}-{desc}` | `docs/plans/{year}/{number}-*/plans/{sub-number}-*/plans/{subsub-number}-{desc}/README.md` |
+| `{prefix}{year}-{number}/{sub-number}-{sub-desc}` | `docs/plans/{year}/{zero-padded-number}-*/plans/{zero-padded-sub-number}-{sub-desc}/README.md` |
+| `{prefix}{year}-{number}/{sub-number}/{subsub-number}-{desc}` | `docs/plans/{year}/{zero-padded-number}-*/plans/{zero-padded-sub-number}-*/plans/{zero-padded-subsub-number}-{desc}/README.md` |
 
 - Only the last segment (the target plan) includes the description; all intermediate segments use the number only
-- The script resolves each number to the full directory name by matching `{number}-*`
+- The script resolves each number to the full directory name by matching `{zero-padded-number}-*` (3-digit zero-padding)
 - Nesting depth is unlimited
 
 ### Non-Plan Branches
@@ -49,9 +49,9 @@ Recognized branch prefixes: `plan/`, `feature/`, `fix/`
 
 | Branch | Plan Path |
 |--------|-----------|
-| `plan/2026-1-add-dark-mode` | `docs/plans/2026/1-add-dark-mode/README.md` |
-| `feature/2026-12-refactor-auth` | `docs/plans/2026/12-refactor-auth/README.md` |
-| `feature/2026-17/1-payment-flow` | `docs/plans/2026/17-subscription-licensing/plans/1-payment-flow/README.md` |
-| `feature/2026-17/1/2-validation` | `docs/plans/2026/17-subscription-licensing/plans/1-payment-flow/plans/2-validation/README.md` |
-| `fix/2026-17/1/2/1-edge-case` | `docs/plans/2026/17-subscription-licensing/plans/1-payment-flow/plans/2-validation/plans/1-edge-case/README.md` |
+| `plan/2026-1-add-dark-mode` | `docs/plans/2026/001-add-dark-mode/README.md` |
+| `feature/2026-12-refactor-auth` | `docs/plans/2026/012-refactor-auth/README.md` |
+| `feature/2026-17/1-payment-flow` | `docs/plans/2026/017-subscription-licensing/plans/001-payment-flow/README.md` |
+| `feature/2026-17/1/2-validation` | `docs/plans/2026/017-subscription-licensing/plans/001-payment-flow/plans/002-validation/README.md` |
+| `fix/2026-17/1/2/1-edge-case` | `docs/plans/2026/017-subscription-licensing/plans/001-payment-flow/plans/002-validation/plans/001-edge-case/README.md` |
 | `2026-01-31_1400` | (none) |

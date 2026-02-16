@@ -37,22 +37,29 @@ get_branch_prefix() {
     fi
 }
 
-# Find a directory matching "{number}-*" in the given base directory
+# Zero-pad a number to 3 digits
+pad_number() {
+    printf "%03d" "$1"
+}
+
+# Find a directory matching "{padded-number}-*" in the given base directory
 resolve_dir_by_number() {
     local base_dir="$1"
     local number="$2"
+    local padded
+    padded=$(pad_number "$number")
 
     local matches=()
-    for dir in "${base_dir}/${number}-"*/; do
+    for dir in "${base_dir}/${padded}-"*/; do
         [[ -d "$dir" ]] && matches+=("$dir")
     done
 
     if [[ ${#matches[@]} -eq 0 ]]; then
-        echo "Error: No directory matching '${number}-*' in ${base_dir}/" >&2
+        echo "Error: No directory matching '${padded}-*' in ${base_dir}/" >&2
         exit 1
     fi
     if [[ ${#matches[@]} -gt 1 ]]; then
-        echo "Error: Multiple directories matching '${number}-*' in ${base_dir}/" >&2
+        echo "Error: Multiple directories matching '${padded}-*' in ${base_dir}/" >&2
         exit 1
     fi
 
@@ -83,7 +90,11 @@ get_plan_path() {
 
     if [[ ${#segments[@]} -eq 1 ]]; then
         # Single segment: full name (e.g., "2026-17-subscription-licensing")
-        plan_path="docs/plans/${year}/${identifier}"
+        # Extract number and resolve to zero-padded directory
+        local number="${identifier%%-*}"
+        local top_dir
+        top_dir=$(resolve_dir_by_number "docs/plans/${year}" "$number")
+        plan_path="docs/plans/${year}/${top_dir}"
     else
         # Multiple segments: first is "year-number", resolve to full directory name
         local top_dir
@@ -97,9 +108,12 @@ get_plan_path() {
             plan_path="${plan_path}/plans/${sub_dir}"
         done
 
-        # Last segment: full "number-description", use directly
+        # Last segment: "number-description", resolve by number
         local last="${segments[${#segments[@]} - 1]}"
-        plan_path="${plan_path}/plans/${last}"
+        local last_number="${last%%-*}"
+        local last_dir
+        last_dir=$(resolve_dir_by_number "${plan_path}/plans" "$last_number")
+        plan_path="${plan_path}/plans/${last_dir}"
     fi
 
     plan_path="${plan_path}/README.md"
