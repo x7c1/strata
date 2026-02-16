@@ -2,46 +2,86 @@
 
 # Shared command detection functions for hooks
 
-# Check if command is a git commit
-is_git_commit() {
+# Split compound command (&&, ||, ;) into individual sub-commands
+_split_commands() {
+    local command="$1"
+    echo "$command" | sed 's/ *&& */\n/g; s/ *|| */\n/g; s/ *; */\n/g'
+}
+
+# Check if a single sub-command is a git commit
+_is_single_git_commit() {
     local command="$1"
     echo "$command" | grep -qE '\bgit\b.*\bcommit\b'
 }
 
-# Check if command is a non-branch-creating git command
+# Check if a single sub-command is a non-branch-creating git command
 # These commands may contain "branch" in arguments (e.g., commit messages)
-is_non_branch_command() {
+_is_single_non_branch_command() {
     local command="$1"
     echo "$command" | grep -qE 'git\b.*\b(commit|push|pull|fetch|merge|rebase|stash|log|diff|show|status|add|rm|mv|reset|revert|cherry-pick|tag|remote|clone)\b'
 }
 
-# Check if command is a branch creation command
-is_branch_creation() {
+# Check if a single sub-command is a branch creation command
+_is_single_branch_creation() {
     local command="$1"
-    if is_non_branch_command "$command"; then
+    if _is_single_non_branch_command "$command"; then
         return 1
     fi
     echo "$command" | grep -qE 'git\b.*\b(checkout -b|switch -c)\b' ||
     echo "$command" | grep -qE 'git\b.*\bbranch [^-]'
 }
 
-# Extract branch name from a branch creation command
-# Returns empty string if not a branch creation command
+# Check if command (possibly compound) contains a git commit
+is_git_commit() {
+    local command="$1"
+    local subcmd
+    while IFS= read -r subcmd; do
+        [[ -z "$subcmd" ]] && continue
+        if _is_single_git_commit "$subcmd"; then
+            return 0
+        fi
+    done <<< "$(_split_commands "$command")"
+    return 1
+}
+
+# Check if command is a non-branch-creating git command (kept for compatibility)
+is_non_branch_command() {
+    local command="$1"
+    _is_single_non_branch_command "$command"
+}
+
+# Check if command (possibly compound) contains a branch creation
+is_branch_creation() {
+    local command="$1"
+    local subcmd
+    while IFS= read -r subcmd; do
+        [[ -z "$subcmd" ]] && continue
+        if _is_single_branch_creation "$subcmd"; then
+            return 0
+        fi
+    done <<< "$(_split_commands "$command")"
+    return 1
+}
+
+# Extract branch name from a command (possibly compound)
+# Returns empty string if no branch creation found
 get_branch_name() {
     local command="$1"
-
-    if is_non_branch_command "$command"; then
-        echo ""
-        return
-    fi
-
-    if echo "$command" | grep -qE 'git\b.*\b(checkout -b|switch -c)'; then
-        echo "$command" | sed -E 's/.*\b(checkout -b|switch -c) +([^ ]+).*/\2/'
-    elif echo "$command" | grep -qE 'git\b.*\bbranch [^-]'; then
-        echo "$command" | sed -E 's/.*\bbranch +([^-][^ ]*).*/\1/'
-    else
-        echo ""
-    fi
+    local subcmd
+    while IFS= read -r subcmd; do
+        [[ -z "$subcmd" ]] && continue
+        if _is_single_non_branch_command "$subcmd"; then
+            continue
+        fi
+        if echo "$subcmd" | grep -qE 'git\b.*\b(checkout -b|switch -c)'; then
+            echo "$subcmd" | sed -E 's/.*\b(checkout -b|switch -c) +([^ ]+).*/\2/'
+            return
+        elif echo "$subcmd" | grep -qE 'git\b.*\bbranch [^-]'; then
+            echo "$subcmd" | sed -E 's/.*\bbranch +([^-][^ ]*).*/\1/'
+            return
+        fi
+    done <<< "$(_split_commands "$command")"
+    echo ""
 }
 
 # Check if command is gh pr create
