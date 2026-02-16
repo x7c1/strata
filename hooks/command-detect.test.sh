@@ -124,6 +124,21 @@ assert_false "git branch -D old-branch" \
     is_branch_creation "git branch -D old-branch"
 
 echo ""
+echo "=== Testing is_branch_creation (compound commands) ==="
+
+assert_true "git branch foo && git reset --hard HEAD~1" \
+    is_branch_creation "git branch foo && git reset --hard HEAD~1"
+
+assert_true "git reset --hard HEAD~1 && git branch foo" \
+    is_branch_creation "git reset --hard HEAD~1 && git branch foo"
+
+assert_true "git branch foo && git reset --hard HEAD~1 && git checkout foo" \
+    is_branch_creation "git branch foo && git reset --hard HEAD~1 && git checkout foo"
+
+assert_false "git add . && git commit -m 'msg' && git push" \
+    is_branch_creation "git add . && git commit -m 'msg' && git push"
+
+echo ""
 echo "=== Testing get_branch_name ==="
 
 assert_equals "git checkout -b feature/test" \
@@ -149,6 +164,21 @@ assert_equals "git commit -m 'branch fix' returns empty" \
 assert_equals "git branch -d old returns empty" \
     "" \
     "$(get_branch_name "git branch -d old")"
+
+echo ""
+echo "=== Testing get_branch_name (compound commands) ==="
+
+assert_equals "git branch foo && git reset --hard" \
+    "foo" \
+    "$(get_branch_name "git branch foo && git reset --hard HEAD~1")"
+
+assert_equals "git reset --hard && git checkout -b bar" \
+    "bar" \
+    "$(get_branch_name "git reset --hard HEAD~1 && git checkout -b bar")"
+
+assert_equals "git add . && git commit -m 'msg' returns empty" \
+    "" \
+    "$(get_branch_name "git add . && git commit -m 'msg'")"
 
 echo ""
 echo "=== Testing is_gh_pr_create ==="
