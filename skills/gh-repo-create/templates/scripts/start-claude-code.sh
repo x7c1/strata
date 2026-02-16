@@ -10,10 +10,11 @@ if ! command -v claude &> /dev/null; then
 else
     echo "Claude Code is already installed. Checking for updates..."
 
-    # Update Claude Code to latest version
-    claude update
+    # Update Claude Code to latest version (continue on failure to prevent container crash)
+    claude update || echo "[WARNING] claude update failed (exit $?), continuing with current version."
     echo "Update check completed."
 fi
 
-# Start Claude Code
-exec claude
+# Start Claude Code with strata plugin loaded
+STRATA_DIR="$(cd "$(dirname "$0")/../vendor/strata" && pwd)"
+exec claude --plugin-dir "$STRATA_DIR"
