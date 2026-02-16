@@ -54,27 +54,27 @@ For sub-plans, some of these may be answered by the parent plan's context. Simpl
 
 - Determine the current year
 - Create the year directory if it doesn't exist
-- Check existing items in that year's directory to determine the next sequential number (starting from 1 for each year)
-- Create project directory with format `{number}-{descriptive-name}`
+- Check existing items in that year's directory to determine the next sequential number (starting from 001 for each year)
+- Create project directory with format `{zero-padded-number}-{descriptive-name}` (3-digit zero-padding)
 
 ### Sub-Plans
 
 - Create a `plans/` directory under the parent plan if it doesn't exist
-- Check existing items in `{parent}/plans/` to determine the next sequential number (starting from 1)
-- Create sub-plan directory with format `{number}-{descriptive-name}`
+- Check existing items in `{parent}/plans/` to determine the next sequential number (starting from 001)
+- Create sub-plan directory with format `{zero-padded-number}-{descriptive-name}` (3-digit zero-padding)
 - Sub-plans follow the same structure and can themselves contain nested `plans/` directories
 
 ```
-docs/plans/{year}/{parent-number}-{parent-name}/
+docs/plans/{year}/{zero-padded-number}-{parent-name}/
 ├── README.md
 ├── adr.md
 └── plans/
-    ├── 1-sub-plan-a/
+    ├── 001-sub-plan-a/
     │   ├── README.md
     │   └── plans/
-    │       └── 1-deeper-plan/
+    │       └── 001-deeper-plan/
     │           └── README.md
-    └── 2-sub-plan-b/
+    └── 002-sub-plan-b/
         └── README.md
 ```
 

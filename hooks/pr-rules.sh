@@ -29,6 +29,12 @@ print_related_plan_section() {
     # Extract year (first 4 digits) and the rest (e.g., "2026-17-foo" -> "2026" and "17-foo")
     year=$(echo "$plan_id" | cut -d'-' -f1)
     number_and_name=$(echo "$plan_id" | cut -d'-' -f2-)
+    # Zero-pad the number part for directory path
+    local number="${number_and_name%%-*}"
+    local name="${number_and_name#*-}"
+    local padded_number
+    padded_number=$(printf "%03d" "$number")
+    number_and_name="${padded_number}-${name}"
     # Get repo URL for absolute links (relative links don't work in PR bodies)
     repo_url=$(gh repo view --json url -q '.url' 2>/dev/null || echo "https://github.com/OWNER/REPO")
 

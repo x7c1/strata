@@ -82,10 +82,10 @@ echo "=== Testing plan_exists ==="
 
 # Create temp directory structure for testing
 TEMP_PROJECT=$(mktemp -d)
-mkdir -p "$TEMP_PROJECT/docs/plans/2026/1-add-dark-mode"
-mkdir -p "$TEMP_PROJECT/docs/plans/2026/18-refactor-api"
-mkdir -p "$TEMP_PROJECT/docs/plans/2026/17-licensing/plans/1-payment-flow"
-mkdir -p "$TEMP_PROJECT/docs/plans/2026/17-licensing/plans/1-payment-flow/plans/2-validation"
+mkdir -p "$TEMP_PROJECT/docs/plans/2026/001-add-dark-mode"
+mkdir -p "$TEMP_PROJECT/docs/plans/2026/018-refactor-api"
+mkdir -p "$TEMP_PROJECT/docs/plans/2026/017-licensing/plans/001-payment-flow"
+mkdir -p "$TEMP_PROJECT/docs/plans/2026/017-licensing/plans/001-payment-flow/plans/002-validation"
 
 assert_plan_exists() {
     local branch="$1"

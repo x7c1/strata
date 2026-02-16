@@ -29,9 +29,9 @@ is_implementation_branch_name() {
 }
 
 # Resolve the plan directory path from a branch name
-# e.g., "feature/2026-18-layer-arch"            -> "docs/plans/2026/18-*"
-# e.g., "feature/2026-17/1-payment-flow"        -> "docs/plans/2026/17-*/plans/1-*"
-# e.g., "feature/2026-17/1/2-validation"        -> "docs/plans/2026/17-*/plans/1-*/plans/2-*"
+# e.g., "feature/2026-18-layer-arch"            -> "docs/plans/2026/018-*"
+# e.g., "feature/2026-17/1-payment-flow"        -> "docs/plans/2026/017-*/plans/001-*"
+# e.g., "feature/2026-17/1/2-validation"        -> "docs/plans/2026/017-*/plans/001-*/plans/002-*"
 resolve_plan_path() {
     local branch="$1"
     local project_root="${2:-.}"
@@ -53,7 +53,9 @@ resolve_plan_path() {
     for segment in "${segments[@]}"; do
         # Extract number from segment (e.g., "17-description" -> "17", "1" -> "1")
         local number="${segment%%-*}"
-        glob_path="$glob_path/${number}-*/plans"
+        local padded
+        padded=$(printf "%03d" "$number")
+        glob_path="$glob_path/${padded}-*/plans"
     done
 
     # Remove trailing /plans — the last segment is the target plan itself

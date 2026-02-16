@@ -9,7 +9,7 @@ Implements features according to a specified plan document, then automates the g
 
 ## Arguments
 
-- `$0`: Path to the plan document (e.g., `docs/plans/2026/1-add-feature/README.md`)
+- `$0`: Path to the plan document (e.g., `docs/plans/2026/001-add-feature/README.md`)
 
 ## Instructions
 
@@ -28,24 +28,24 @@ The branch name is derived from the plan path. Use `feature/` for new features a
 
 ### Top-Level Plans
 
-- Plan path: `docs/plans/2026/1-add-feature/README.md`
+- Plan path: `docs/plans/2026/001-add-feature/README.md`
 - Branch name: `feature/2026-1-add-feature`
 
 ### Sub-Plans
 
 Sub-plan branches use `{year}-{parent-number}` as prefix, followed by the sub-plan's `{number}-{description}`:
 
-- Plan path: `docs/plans/2026/17-licensing/plans/1-payment-flow/README.md`
+- Plan path: `docs/plans/2026/017-licensing/plans/001-payment-flow/README.md`
 - Branch name: `feature/2026-17/1-payment-flow`
 
 ### Deeper Nesting
 
 Intermediate parents use their number only; the last segment (target plan) includes the description:
 
-- Plan path: `docs/plans/2026/17-licensing/plans/1-payment-flow/plans/2-validation/README.md`
+- Plan path: `docs/plans/2026/017-licensing/plans/001-payment-flow/plans/002-validation/README.md`
 - Branch name: `feature/2026-17/1/2-validation`
 
-- Plan path: `docs/plans/2026/17-licensing/plans/1-payment-flow/plans/2-validation/plans/1-edge-case/README.md`
+- Plan path: `docs/plans/2026/017-licensing/plans/001-payment-flow/plans/002-validation/plans/001-edge-case/README.md`
 - Branch name: `feature/2026-17/1/2/1-edge-case`
 
 ## Workflow
@@ -85,12 +85,12 @@ Intermediate parents use their number only; the last segment (target plan) inclu
 
 Top-level plan:
 ```
-/implement-plan docs/plans/2026/1-add-dark-mode/README.md
+/implement-plan docs/plans/2026/001-add-dark-mode/README.md
 ```
 
 Sub-plan:
 ```
-/implement-plan docs/plans/2026/17-licensing/plans/1-payment-flow/README.md
+/implement-plan docs/plans/2026/017-licensing/plans/001-payment-flow/README.md
 ```
 
 ## Notes
