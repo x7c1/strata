@@ -124,6 +124,27 @@ assert_false "git branch -D old-branch" \
     is_branch_creation "git branch -D old-branch"
 
 echo ""
+echo "=== Testing is_branch_creation (branch names matching git subcommands) ==="
+
+assert_true "git checkout -b add-pigeon-source" \
+    is_branch_creation "git checkout -b add-pigeon-source"
+
+assert_true "git checkout -b status-page" \
+    is_branch_creation "git checkout -b status-page"
+
+assert_true "git checkout -b reset-password-flow" \
+    is_branch_creation "git checkout -b reset-password-flow"
+
+assert_true "git checkout -b log-viewer" \
+    is_branch_creation "git checkout -b log-viewer"
+
+assert_true "git switch -c add-feature" \
+    is_branch_creation "git switch -c add-feature"
+
+assert_true "git switch -c remote-config" \
+    is_branch_creation "git switch -c remote-config"
+
+echo ""
 echo "=== Testing is_branch_creation (compound commands) ==="
 
 assert_true "git branch foo && git reset --hard HEAD~1" \
@@ -179,6 +200,21 @@ assert_equals "git reset --hard && git checkout -b bar" \
 assert_equals "git add . && git commit -m 'msg' returns empty" \
     "" \
     "$(get_branch_name "git add . && git commit -m 'msg'")"
+
+echo ""
+echo "=== Testing get_branch_name (branch names matching git subcommands) ==="
+
+assert_equals "git checkout -b add-pigeon-source" \
+    "add-pigeon-source" \
+    "$(get_branch_name "git checkout -b add-pigeon-source")"
+
+assert_equals "git checkout -b status-page" \
+    "status-page" \
+    "$(get_branch_name "git checkout -b status-page")"
+
+assert_equals "git switch -c reset-password" \
+    "reset-password" \
+    "$(get_branch_name "git switch -c reset-password")"
 
 echo ""
 echo "=== Testing is_gh_pr_create ==="

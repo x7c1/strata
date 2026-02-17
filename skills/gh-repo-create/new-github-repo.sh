@@ -388,11 +388,18 @@ configure_repository_settings() {
 
 # Apply ruleset to default branch
 apply_ruleset() {
-    # Check if branch exists before applying ruleset
-    if ! gh api "repos/$REPO_OWNER/$REPO_NAME/branches/$DEFAULT_BRANCH" &> /dev/null; then
-        print_info "Branch '$DEFAULT_BRANCH' does not exist yet, skipping ruleset"
-        return 0
-    fi
+    # Wait for branch to be visible via API (GitHub has propagation delay after push)
+    local max_attempts=10
+    local attempt=0
+    while ! gh api "repos/$REPO_OWNER/$REPO_NAME/branches/$DEFAULT_BRANCH" &> /dev/null; do
+        attempt=$((attempt + 1))
+        if [ "$attempt" -ge "$max_attempts" ]; then
+            print_info "Branch '$DEFAULT_BRANCH' not available after ${max_attempts}s, skipping ruleset"
+            return 0
+        fi
+        print_debug "Waiting for branch '$DEFAULT_BRANCH' to be available... (${attempt}/${max_attempts})"
+        sleep 1
+    done
 
     # Build rules array
     local rules='[]'

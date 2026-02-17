@@ -24,10 +24,13 @@ _is_single_non_branch_command() {
 # Check if a single sub-command is a branch creation command
 _is_single_branch_creation() {
     local command="$1"
+    # checkout -b and switch -c are always branch creation regardless of branch name
+    if echo "$command" | grep -qE 'git\b.*\b(checkout -b|switch -c)\b'; then
+        return 0
+    fi
     if _is_single_non_branch_command "$command"; then
         return 1
     fi
-    echo "$command" | grep -qE 'git\b.*\b(checkout -b|switch -c)\b' ||
     echo "$command" | grep -qE 'git\b.*\bbranch [^-]'
 }
 
@@ -70,13 +73,15 @@ get_branch_name() {
     local subcmd
     while IFS= read -r subcmd; do
         [[ -z "$subcmd" ]] && continue
-        if _is_single_non_branch_command "$subcmd"; then
-            continue
-        fi
+        # checkout -b and switch -c are always branch creation regardless of branch name
         if echo "$subcmd" | grep -qE 'git\b.*\b(checkout -b|switch -c)'; then
             echo "$subcmd" | sed -E 's/.*\b(checkout -b|switch -c) +([^ ]+).*/\2/'
             return
-        elif echo "$subcmd" | grep -qE 'git\b.*\bbranch [^-]'; then
+        fi
+        if _is_single_non_branch_command "$subcmd"; then
+            continue
+        fi
+        if echo "$subcmd" | grep -qE 'git\b.*\bbranch [^-]'; then
             echo "$subcmd" | sed -E 's/.*\bbranch +([^-][^ ]*).*/\1/'
             return
         fi
