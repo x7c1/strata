@@ -38,7 +38,7 @@ COLS=$(tput cols 2>/dev/null || echo 80)
 
 # Return visible width (strip ANSI escapes)
 vlen() {
-  printf '%b' "$1" | sed $'s/\033\[[0-9;]*m//g' | wc -m | tr -d ' '
+  printf '%b' "$1" | sed $'s/\033\[[0-9;]*m//g' | LC_ALL=C.UTF-8 wc -m 2>/dev/null | tr -d ' '
 }
 
 # Print a left-right aligned line
