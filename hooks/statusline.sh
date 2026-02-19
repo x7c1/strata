@@ -15,17 +15,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=platform.sh
 source "$SCRIPT_DIR/platform.sh"
 
-INPUT=$(cat)
-
-MODEL=$(echo "$INPUT" | jq -r '.model.display_name // "?"')
-CTX=$(printf "%.1f" "$(echo "$INPUT" | jq -r '.context_window.used_percentage // 0')")
-CWD=$(echo "$INPUT" | jq -r '.workspace.current_dir // ""')
-PROJECT_DIR=$(echo "$INPUT" | jq -r '.workspace.project_dir // ""')
-BRANCH=$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-
-# Display path relative to home
-DISPLAY_PATH="${CWD/$HOME/\~}"
-
 # ANSI colors
 RST='\033[0m'
 DIM='\033[2m'
@@ -33,8 +22,91 @@ PURPLE='\033[35m'
 RED='\033[31m'
 TEAL='\033[36m'
 
-# Terminal width (fallback: 80)
-COLS=$(tput cols 2>/dev/null || echo 80)
+main() {
+  local input
+  input=$(cat)
+
+  local model ctx cwd project_dir branch display_path
+  model=$(echo "$input" | jq -r '.model.display_name // "?"')
+  ctx=$(printf "%.1f" "$(echo "$input" | jq -r '.context_window.used_percentage // 0')")
+  cwd=$(echo "$input" | jq -r '.workspace.current_dir // ""')
+  project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""')
+  branch=$(git -C "$project_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+  display_path="${cwd/$HOME/\~}"
+
+  local cols
+  cols=$(tput cols 2>/dev/null || echo 80)
+
+  local usage_file="${HOME}/.claude/token-logs/usage.jsonl"
+  local f5 s7 f5r s7r
+  {
+    read -r f5
+    read -r s7
+    read -r f5r
+    read -r s7r
+  } < <(load_usage "$usage_file")
+
+  render "$display_path" "$model" "$ctx" "$branch" "$f5" "$s7" "$f5r" "$s7r" "$cols"
+}
+
+# Render the status line.
+# All data is passed as arguments; this function produces no side effects
+# beyond writing to stdout.
+#
+# Usage: render <display_path> <model> <ctx> <branch> <f5> <s7> <f5r> <s7r> <cols>
+render() {
+  local display_path="$1" model="$2" ctx="$3" branch="$4"
+  local f5="$5" s7="$6" f5r="$7" s7r="$8"
+  local cols="${9:-80}"
+
+  local model_label="[${model}]"
+
+  # Line 1: path (left) | context + model (right)
+  local l1="${DIM}${display_path}${RST}"
+  local r1="${TEAL}ctx${RST} $(bar "$ctx" "$TEAL") $(printf "${TEAL}%5s%%${RST}" "$ctx") $(printf "${DIM}%12s${RST}" "$model_label")"
+  lr "$l1" "$r1" "$cols"
+
+  # Line 2: spacer (left) | 5h usage (right)
+  local l2="${DIM} ${RST}"
+  local r2=""
+  if [ -n "$f5" ]; then
+    local f5_bar="$f5"; [ "$f5" = "?" ] && f5_bar="0"
+    r2="${PURPLE}5h${RST} $(bar "$f5_bar" "$PURPLE") $(printf "${PURPLE}%5s%%${RST}" "$f5") ${DIM}reset $(remaining "$f5r")${RST}"
+  fi
+  lr "$l2" "$r2" "$cols"
+
+  # Line 3: branch (left) | 7d usage (right)
+  local l3=""
+  [ -n "$branch" ] && l3="${branch}"
+  local r3=""
+  if [ -n "$s7" ]; then
+    local s7_bar="$s7"; [ "$s7" = "?" ] && s7_bar="0"
+    r3="${RED}7d${RST} $(bar "$s7_bar" "$RED") $(printf "${RED}%5s%%${RST}" "$s7") ${DIM}reset $(remaining "$s7r")${RST}"
+  fi
+  lr "$l3" "$r3" "$cols"
+}
+
+# Load usage data from the last line of usage.jsonl.
+# Outputs four lines: f5 s7 f5r s7r (empty lines when no data).
+load_usage() {
+  local usage_file="$1"
+  local last=""
+  if [ -f "$usage_file" ]; then
+    last=$(tail -1 "$usage_file")
+  fi
+
+  if [ -z "$last" ]; then
+    printf '?\n?\n\n\n'
+    return
+  fi
+
+  local f5 s7 f5r s7r
+  f5=$(printf "%.1f" "$(echo "$last" | jq -r '.five_hour.utilization // 0')")
+  s7=$(printf "%.1f" "$(echo "$last" | jq -r '.seven_day.utilization // 0')")
+  f5r=$(echo "$last" | jq -r '.five_hour.resets_at // empty')
+  s7r=$(echo "$last" | jq -r '.seven_day.resets_at // empty')
+  printf '%s\n%s\n%s\n%s\n' "$f5" "$s7" "$f5r" "$s7r"
+}
 
 # Return visible width (strip ANSI escapes)
 vlen() {
@@ -43,11 +115,11 @@ vlen() {
 
 # Print a left-right aligned line
 lr() {
-  local left="$1" right="$2"
+  local left="$1" right="$2" cols="$3"
   local lw=0 rw=0
   [ -n "$left" ] && lw=$(vlen "$left")
   [ -n "$right" ] && rw=$(vlen "$right")
-  local pad=$((COLS - lw - rw))
+  local pad=$((cols - lw - rw))
   [ "$pad" -lt 1 ] && pad=1
   printf '%b%*s%b\n' "$left" "$pad" "" "$right"
 }
@@ -69,11 +141,11 @@ bar() {
 # Calculate remaining time until reset
 remaining() {
   local reset_at=$1
-  if [ -z "$reset_at" ]; then echo "?"; return; fi
+  if [ -z "$reset_at" ]; then printf "%6s" "?"; return; fi
 
   local reset_epoch
   reset_epoch=$(parse_iso_date "$reset_at")
-  if [ -z "$reset_epoch" ]; then echo "?"; return; fi
+  if [ -z "$reset_epoch" ]; then printf "%6s" "?"; return; fi
 
   local now
   now=$(date +%s)
@@ -89,33 +161,6 @@ remaining() {
   fi
 }
 
-# --- Output ---
-USAGE_FILE="${HOME}/.claude/token-logs/usage.jsonl"
-LAST=""
-if [ -f "$USAGE_FILE" ]; then
-  LAST=$(tail -1 "$USAGE_FILE")
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main
 fi
-
-F5=$(printf "%.1f" "$(echo "$LAST" | jq -r '.five_hour.utilization // 0' 2>/dev/null)")
-S7=$(printf "%.1f" "$(echo "$LAST" | jq -r '.seven_day.utilization // 0' 2>/dev/null)")
-F5R=$(echo "$LAST" | jq -r '.five_hour.resets_at // empty' 2>/dev/null)
-S7R=$(echo "$LAST" | jq -r '.seven_day.resets_at // empty' 2>/dev/null)
-
-# Line 1: path (left) | context (right)
-L1="${DIM}${DISPLAY_PATH}${RST}"
-MODEL_LABEL="[${MODEL}]"
-R1="${TEAL}ctx${RST} $(bar "$CTX" "$TEAL") $(printf "${TEAL}%5s%%${RST}" "$CTX") $(printf "${DIM}%12s${RST}" "$MODEL_LABEL")"
-lr "$L1" "$R1"
-
-# Line 2: (spacer) | 5h usage (right)
-L2="${DIM} ${RST}"
-R2=""
-[ -n "$F5" ] && [ "$F5" != "?" ] && R2="${PURPLE}5h${RST} $(bar "$F5" "$PURPLE") $(printf "${PURPLE}%5s%%${RST}" "$F5") ${DIM}reset $(remaining "$F5R")${RST}"
-lr "$L2" "$R2"
-
-# Line 3: branch (left) | 7d usage (right)
-L3=""
-[ -n "$BRANCH" ] && L3="${BRANCH}"
-R3=""
-[ -n "$S7" ] && [ "$S7" != "?" ] && R3="${RED}7d${RST} $(bar "$S7" "$RED") $(printf "${RED}%5s%%${RST}" "$S7") ${DIM}reset $(remaining "$S7R")${RST}"
-lr "$L3" "$R3"
