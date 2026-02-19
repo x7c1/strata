@@ -59,6 +59,10 @@ render() {
   local f5="$5" s7="$6" f5r="$7" s7r="$8"
   local cols="${9:-80}"
 
+  # Reset utilization to 0.0 if the reset time has already passed
+  f5=$(effective_utilization "$f5" "$f5r")
+  s7=$(effective_utilization "$s7" "$s7r")
+
   local model_label="[${model}]"
 
   # Line 1: path (left) | context + model (right)
@@ -136,6 +140,28 @@ bar() {
   [ "$filled" -gt 0 ] && printf "${color}%0.s█${RST}" $(seq 1 $filled)
   [ "$empty" -gt 0 ] && printf "${DIM}%0.s░${RST}" $(seq 1 $empty)
   printf "${DIM}▏${RST}"
+}
+
+# Return utilization, or "0.0" if the reset time has already passed.
+effective_utilization() {
+  local util="$1" reset_at="$2"
+  if [ -z "$reset_at" ] || [ "$util" = "?" ]; then
+    echo "$util"
+    return
+  fi
+  local reset_epoch
+  reset_epoch=$(parse_iso_date "$reset_at")
+  if [ -z "$reset_epoch" ]; then
+    echo "$util"
+    return
+  fi
+  local now
+  now=$(date +%s)
+  if [ "$now" -ge "$reset_epoch" ]; then
+    echo "0.0"
+  else
+    echo "$util"
+  fi
 }
 
 # Calculate remaining time until reset
