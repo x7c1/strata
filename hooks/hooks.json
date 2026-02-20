@@ -31,16 +31,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/vendor/strata/hooks/record-usage.sh"
-          }
-        ]
-      }
     ]
   }
 }

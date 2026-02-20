@@ -37,7 +37,7 @@ main() {
   local cols
   cols=$(tput cols 2>/dev/null || echo 80)
 
-  local usage_file="${HOME}/.claude/token-logs/usage.jsonl"
+  local usage_file="${USAGE_LOG_DIR:-${HOME}/.claude/token-logs}/usage.jsonl"
   local f5 s7 f5r s7r
   {
     read -r f5
