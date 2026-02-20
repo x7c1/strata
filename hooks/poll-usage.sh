@@ -16,6 +16,7 @@ source "$SCRIPT_DIR/platform.sh"
 
 SESSION_NAME="claude-status-poll"
 MAX_LINES=5000
+RAW_RETENTION_DAYS=7
 ACTIVE_THRESHOLD_MIN=2
 POLL_SESSION_FILE=""
 
@@ -257,6 +258,9 @@ capture_usage() {
       tail -n "$keep" "$LOG_FILE" > "${LOG_FILE}.tmp" && mv "${LOG_FILE}.tmp" "$LOG_FILE"
     fi
   fi
+
+  # Remove raw logs older than RAW_RETENTION_DAYS
+  find "$RAW_DIR" -name 'usage-*.log' -mtime "+${RAW_RETENTION_DAYS}" -delete 2>/dev/null
 
   # Close the status dialog
   tmux send-keys -t "$SESSION_NAME" Escape
