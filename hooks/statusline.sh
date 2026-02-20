@@ -65,29 +65,29 @@ render() {
 
   local model_label="[${model}]"
 
-  # Line 1: path (left) | context + model (right)
-  local l1="${DIM}${display_path}${RST}"
-  local r1="${TEAL}ctx${RST} $(bar "$ctx" "$TEAL") $(printf "${TEAL}%5s%%${RST}" "$ctx") $(printf "${DIM}%12s${RST}" "$model_label")"
-  lr "$l1" "$r1" "$cols"
+  # Line 1: context bar (left), path (right)
+  local l1="$(printf "${TEAL}%3s${RST}" "ctx")$(bar "$ctx" "$TEAL")$(printf "${TEAL}%6s${RST}" "$(printf "%04.1f%%" "$ctx")")"
+  printf '%b%*s  %b\n' "$l1" 13 "" "${display_path}"
 
-  # Line 2: spacer (left) | 5h usage (right)
-  local l2="${DIM} ${RST}"
-  local r2=""
+  # Line 2: 5h usage + reset (left), branch (right)
+  local l2=""
   if [ -n "$f5" ]; then
     local f5_bar="$f5"; [ "$f5" = "?" ] && f5_bar="0"
-    r2="${PURPLE}5h${RST} $(bar "$f5_bar" "$PURPLE") $(printf "${PURPLE}%5s%%${RST}" "$f5") ${DIM}reset $(remaining "$f5r")${RST}"
+    local f5_pct; [ "$f5" = "?" ] && f5_pct="?%" || f5_pct=$(printf "%04.1f%%" "$f5")
+    l2="$(printf "${PURPLE}%3s${RST}" "5h")$(bar "$f5_bar" "$PURPLE")$(printf "${PURPLE}%6s${RST}" "$f5_pct") ${DIM}reset $(remaining "$f5r")${RST}"
   fi
-  lr "$l2" "$r2" "$cols"
+  local r2=""
+  [ -n "$branch" ] && r2="${branch}"
+  printf '%b  %b\n' "$l2" "$r2"
 
-  # Line 3: branch (left) | 7d usage (right)
+  # Line 3: 7d usage + reset (left), model (right)
   local l3=""
-  [ -n "$branch" ] && l3="${branch}"
-  local r3=""
   if [ -n "$s7" ]; then
     local s7_bar="$s7"; [ "$s7" = "?" ] && s7_bar="0"
-    r3="${RED}7d${RST} $(bar "$s7_bar" "$RED") $(printf "${RED}%5s%%${RST}" "$s7") ${DIM}reset $(remaining "$s7r")${RST}"
+    local s7_pct; [ "$s7" = "?" ] && s7_pct="?%" || s7_pct=$(printf "%04.1f%%" "$s7")
+    l3="$(printf "${RED}%3s${RST}" "7d")$(bar "$s7_bar" "$RED")$(printf "${RED}%6s${RST}" "$s7_pct") ${DIM}reset $(remaining "$s7r")${RST}"
   fi
-  lr "$l3" "$r3" "$cols"
+  printf '%b  %b\n' "$l3" "${DIM}${model_label}${RST}"
 }
 
 # Load usage data from the last line of usage.jsonl.
@@ -178,12 +178,13 @@ remaining() {
   local diff=$((reset_epoch - now))
   if [ "$diff" -le 0 ]; then printf "%6s" "now"; return; fi
 
-  local hours=$((diff / 3600))
+  local days=$((diff / 86400))
+  local hours=$(( (diff % 86400) / 3600 ))
   local mins=$(( (diff % 3600) / 60 ))
-  if [ "$hours" -gt 0 ]; then
-    printf "%6s" "$(printf "%dh%02dm" "$hours" "$mins")"
+  if [ "$days" -gt 0 ]; then
+    printf "%02dd%02dh" "$days" "$hours"
   else
-    printf "%6s" "$(printf "%dm" "$mins")"
+    printf "%02dh%02dm" "$hours" "$mins"
   fi
 }
 
