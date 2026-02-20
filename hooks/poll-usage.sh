@@ -262,8 +262,11 @@ capture_usage() {
   # Remove raw logs older than RAW_RETENTION_DAYS
   find "$RAW_DIR" -name 'usage-*.log' -mtime "+${RAW_RETENTION_DAYS}" -delete 2>/dev/null
 
-  # Close the status dialog
+  # Close the status dialog and clear pane history to prevent
+  # /status + "Status dialog dismissed" from accumulating in scrollback
   tmux send-keys -t "$SESSION_NAME" Escape
+  wait_for_stable "$SESSION_NAME" || true
+  tmux clear-history -t "$SESSION_NAME"
 }
 
 main "$@"
