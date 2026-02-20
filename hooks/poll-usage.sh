@@ -208,10 +208,13 @@ capture_usage() {
   local output
   output=$(tmux capture-pane -t "$SESSION_NAME" -p -S -30)
 
-  # Save raw log
+  # Save raw log — extract only the dialog content to avoid
+  # accumulating /status + "Status dialog dismissed" noise
+  local dialog_output
+  dialog_output=$(echo "$output" | sed -n '/Settings:.*Status/,$p')
   {
     echo "=== ${timestamp} ==="
-    echo "$output"
+    echo "${dialog_output:-$output}"
     echo ""
   } >> "$RAW_LOG"
 
