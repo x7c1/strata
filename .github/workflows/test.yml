@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run hook tests
+      - name: Run tests
         run: |
-          for test_file in hooks/*.test.sh; do
+          for test_file in plugins/workflows/hooks/*.test.sh plugins/statusline/scripts/*.test.sh; do
             echo "=== Running $test_file ==="
             bash "$test_file"
           done
