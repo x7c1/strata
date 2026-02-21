@@ -6,6 +6,10 @@ Development automation tools and scripts.
 
 Install as a plugin and invoke skills with `/strata:` prefix.
 
+## Guides
+
+- [Statusline: Rate-Limit Usage Display](docs/guides/statusline/README.md)
+
 ## License
 
 MIT
