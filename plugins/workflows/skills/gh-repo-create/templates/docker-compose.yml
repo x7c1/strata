@@ -12,6 +12,11 @@ services:
     volumes:
       - .:/projects/__PROJECT_NAME__
       - ./claude.local/.claude:/home/developer/.claude
+      - ./claude.local/.npm-global:/home/developer/.npm-global
+      - ./claude.local/.local:/home/developer/.local
+      # Short-form: allows auto-creation because the dir may not exist
+      # until poll-usage.sh runs for the first time.
+      - ${HOST_HOME:-~}/.claude/token-logs:/home/developer/.claude/token-logs
       - type: bind
         source: ./claude.local/.claude.json
         target: /home/developer/.claude.json
@@ -37,9 +42,6 @@ services:
         target: /home/developer/.claude/settings.json
         bind:
           create_host_path: false
-      # Short-form: allows auto-creation because the dir may not exist
-      # until poll-usage.sh runs for the first time.
-      - ${HOST_HOME:-~}/.claude/token-logs:/home/developer/.claude/token-logs
       - type: bind
         source: ${HOST_HOME:-~}/.config/git
         target: /home/developer/.config/git
@@ -56,5 +58,3 @@ services:
         read_only: true
         bind:
           create_host_path: false
-      - ./claude.local/.npm-global:/home/developer/.npm-global
-      - ./claude.local/.local:/home/developer/.local
