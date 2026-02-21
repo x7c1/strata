@@ -217,6 +217,63 @@ assert_equals "git switch -c reset-password" \
     "$(get_branch_name "git switch -c reset-password")"
 
 echo ""
+echo "=== Testing has_git_c_flag ==="
+
+assert_true "git -C /path status" \
+    has_git_c_flag "git -C /path status"
+
+assert_true "git -C /path commit -m 'msg'" \
+    has_git_c_flag "git -C /path commit -m 'msg'"
+
+assert_true "git -C /path checkout -b branch" \
+    has_git_c_flag "git -C /path checkout -b branch"
+
+assert_false "git status" \
+    has_git_c_flag "git status"
+
+assert_false "git commit -m 'msg'" \
+    has_git_c_flag "git commit -m 'msg'"
+
+assert_false "git push origin main" \
+    has_git_c_flag "git push origin main"
+
+echo ""
+echo "=== Testing has_git_c_flag (compound commands) ==="
+
+assert_true "git -C /path push && git status" \
+    has_git_c_flag "git -C /path push && git status"
+
+assert_true "git status && git -C /path log" \
+    has_git_c_flag "git status && git -C /path log"
+
+assert_false "git status && git log" \
+    has_git_c_flag "git status && git log"
+
+assert_false "git add . && git commit -m 'msg' && git push" \
+    has_git_c_flag "git add . && git commit -m 'msg' && git push"
+
+echo ""
+echo "=== Testing has_git_c_flag (quoted strings) ==="
+
+assert_false "git commit -m 'git -C /path status' (single quotes)" \
+    has_git_c_flag "git commit -m 'git -C /path status'"
+
+assert_false 'git commit -m "git -C /path status" (double quotes)' \
+    has_git_c_flag 'git commit -m "git -C /path status"'
+
+assert_false 'git commit -m "use git -C for remote ops" (double quotes)' \
+    has_git_c_flag 'git commit -m "use git -C for remote ops"'
+
+assert_true "git -C /path commit -m 'message' (real -C with quoted msg)" \
+    has_git_c_flag "git -C /path commit -m 'message'"
+
+assert_true 'git -C /path commit -m "message" (real -C with double-quoted msg)' \
+    has_git_c_flag 'git -C /path commit -m "message"'
+
+assert_false 'echo "git -C /tmp status" (git -C only inside quotes)' \
+    has_git_c_flag 'echo "git -C /tmp status"'
+
+echo ""
 echo "=== Testing is_gh_pr_create ==="
 
 assert_true "gh pr create --title 'test'" \

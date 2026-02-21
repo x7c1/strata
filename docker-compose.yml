@@ -21,4 +21,4 @@ services:
     stdin_open: true
     tty: true
     working_dir: /projects/strata
-    command: bash -c "/projects/strata/scripts/start-claude-code.sh; exec bash"
+    command: bash -c "/projects/strata/scripts/start-claude-code.sh"
