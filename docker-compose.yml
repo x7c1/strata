@@ -13,6 +13,9 @@ services:
       - ./claude.local/.bash_history:/home/developer/.bash_history
       - ~/.claude/CLAUDE.md:/home/developer/.claude/CLAUDE.md
       - ~/.claude/.credentials.json:/home/developer/.claude/.credentials.json
+      - ~/.claude/settings.json:/home/developer/.claude/settings.json
+      - ./plugins/statusline/scripts/statusline.sh:/home/developer/.claude/statusline.sh:ro
+      - ./plugins/statusline/scripts/platform.sh:/home/developer/.claude/platform.sh:ro
       - ~/.config/git:/home/developer/.config/git
       - ~/.config/gh:/home/developer/.config/gh
       - ~/.ssh:/home/developer/.ssh:ro

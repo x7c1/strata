@@ -20,25 +20,7 @@ RAW_RETENTION_DAYS=7
 ACTIVE_THRESHOLD_MIN=2
 POLL_SESSION_FILE=""
 
-# Resolve the log directory: detect Docker container's .claude mount if available,
-# otherwise fall back to the host's ~/.claude/token-logs.
-resolve_log_dir() {
-  if [ -n "${USAGE_LOG_DIR:-}" ]; then
-    echo "$USAGE_LOG_DIR"
-    return
-  fi
-  local container_claude_dir
-  container_claude_dir=$(docker ps -q 2>/dev/null | while read -r id; do
-    docker inspect "$id" --format '{{range .Mounts}}{{if eq .Destination "/home/developer/.claude"}}{{.Source}}{{end}}{{end}}' 2>/dev/null
-  done | head -1)
-  if [ -n "$container_claude_dir" ]; then
-    echo "${container_claude_dir}/token-logs"
-  else
-    echo "${HOME}/.claude/token-logs"
-  fi
-}
-
-LOG_DIR="$(resolve_log_dir)"
+LOG_DIR="${USAGE_LOG_DIR:-${HOME}/.claude/token-logs}"
 LOG_FILE="${LOG_DIR}/usage.jsonl"
 RAW_DIR="${LOG_DIR}/poll-raw"
 RAW_LOG="${RAW_DIR}/usage-$(date '+%Y-%m-%d').log"
