@@ -293,30 +293,31 @@ copy_infrastructure_files() {
     fi
 }
 
-# Add strata submodule to repository
-add_submodule() {
-    local submodule_repo="git@github.com:x7c1/strata.git"
-    local submodule_path="vendor/strata"
+# Create marketplace plugin configuration for strata
+create_plugin_config() {
+    local temp_dir="$1"
 
-    print_debug "Adding strata submodule at $submodule_path"
+    print_debug "Creating strata marketplace plugin configuration"
 
-    # Add submodule
-    if ! git submodule add "$submodule_repo" "$submodule_path" 2>&1; then
-        print_error "Failed to add submodule from $submodule_repo"
-        return 1
-    fi
+    mkdir -p "$temp_dir/repo/.claude"
+    cat > "$temp_dir/repo/.claude/settings.json" << 'SETTINGS_EOF'
+{
+  "extraKnownMarketplaces": {
+    "strata-dev": {
+      "source": {
+        "source": "github",
+        "repo": "x7c1/strata"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "workflows@strata-dev": true,
+    "statusline@strata-dev": true
+  }
+}
+SETTINGS_EOF
 
-    print_debug "Submodule added successfully"
-
-    # Initialize and update submodule
-    if ! git submodule update --init "$submodule_path" 2>&1; then
-        print_error "Failed to initialize submodule at $submodule_path"
-        return 1
-    fi
-
-    print_debug "Submodule initialized successfully"
-
-    return 0
+    print_debug "Plugin configuration created at .claude/settings.json"
 }
 
 # Create initial files
@@ -345,8 +346,8 @@ create_initial_files() {
     # Copy infrastructure files
     copy_infrastructure_files "$temp_dir"
 
-    # Add strata submodule
-    add_submodule
+    # Create strata marketplace plugin configuration
+    create_plugin_config "$temp_dir"
 
     # Commit all files
     git add .

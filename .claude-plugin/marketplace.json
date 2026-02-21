@@ -1,16 +1,26 @@
 {
   "name": "strata-dev",
-  "description": "Marketplace for strata development workflows plugin",
+  "description": "Marketplace for strata development plugins",
   "owner": {
     "name": "x7c1",
     "email": ""
   },
   "plugins": [
     {
-      "name": "strata",
-      "description": "Shared skills, hooks, and shell scripts for development workflows",
+      "name": "workflows",
+      "description": "Development workflow automation — skills and hooks for git, PR, and plan management",
       "version": "1.0.0",
-      "source": "./",
+      "source": "./plugins/workflows",
+      "author": {
+        "name": "x7c1",
+        "email": ""
+      }
+    },
+    {
+      "name": "statusline",
+      "description": "Claude Code status line displaying rate-limit usage and context window stats",
+      "version": "1.0.0",
+      "source": "./plugins/statusline",
       "author": {
         "name": "x7c1",
         "email": ""

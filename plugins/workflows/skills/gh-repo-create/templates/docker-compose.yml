@@ -21,6 +21,11 @@ services:
         bind:
           create_host_path: false
       - type: bind
+        source: ${HOST_HOME:-~}/.claude/settings.json
+        target: /home/developer/.claude/settings.json
+        bind:
+          create_host_path: false
+      - type: bind
         source: ${HOST_HOME:-~}/.config/git
         target: /home/developer/.config/git
         bind:

@@ -65,6 +65,5 @@ The skill includes the following templates:
 
 - Requires GitHub CLI (gh) to be installed and authenticated
 - Requires yq for YAML parsing
-- Automatically adds x7c1/strata as git submodule at vendor/strata
-- Repository created with initial commit containing infrastructure files and submodule
-- Submodule requires SSH access to git@github.com:x7c1/strata.git
+- Automatically configures strata marketplace plugins in `.claude/settings.json`
+- Repository created with initial commit containing infrastructure files and plugin configuration
