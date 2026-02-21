@@ -89,6 +89,33 @@ get_branch_name() {
     echo ""
 }
 
+# Strip single-quoted and double-quoted strings from a command
+_strip_quotes() {
+    local command="$1"
+    echo "$command" | sed -e "s/'[^']*'//g" -e 's/"[^"]*"//g'
+}
+
+# Check if a single sub-command uses git -C flag
+_has_single_git_c_flag() {
+    local command="$1"
+    local stripped
+    stripped=$(_strip_quotes "$command")
+    echo "$stripped" | grep -qE '\bgit\b.*\s-C\s'
+}
+
+# Check if command (possibly compound) contains git -C flag
+has_git_c_flag() {
+    local command="$1"
+    local subcmd
+    while IFS= read -r subcmd; do
+        [[ -z "$subcmd" ]] && continue
+        if _has_single_git_c_flag "$subcmd"; then
+            return 0
+        fi
+    done <<< "$(_split_commands "$command")"
+    return 1
+}
+
 # Check if command is gh pr create
 is_gh_pr_create() {
     local command="$1"

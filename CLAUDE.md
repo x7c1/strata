@@ -15,3 +15,11 @@
 - The Overview should summarize the document's purpose and key points
 - This is critical because automated tools may read only the beginning of .md files
 - Without an Overview at the top, tools cannot understand the document's content
+
+## Development Workflow
+
+### Test-First (Red-Green)
+- When fixing bugs or adding behavior changes, always follow this order:
+  - First: Add tests and confirm they **fail**
+  - Then: Apply the fix and confirm the tests **pass**
+- This proves the fix is what makes the tests pass, not that the tests were trivially correct from the start
