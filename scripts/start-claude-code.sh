@@ -15,6 +15,5 @@ else
     echo "Update check completed."
 fi
 
-# Start Claude Code with strata plugin loaded directly (no marketplace cache updates needed)
-STRATA_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-exec claude --plugin-dir "$STRATA_DIR"
+# Start Claude Code
+exec claude
