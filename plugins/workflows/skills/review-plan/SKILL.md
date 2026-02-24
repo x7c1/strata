@@ -80,7 +80,7 @@ Present items to the user **one at a time**, starting with critical issues:
 
 - State the item clearly (category, location, description)
 - Explain why it matters
-- **Present your own recommendation first with reasoning**, then ask the user for their decision or input
+- **Present your own recommendation first with reasoning**, then ask using structured choices (e.g., "Yes / No / Discuss further") via AskUserQuestion — do not use open-ended free-text questions
 - After the user responds, update the plan document immediately if a change was agreed upon
 - Then move to the next item
 
