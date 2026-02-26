@@ -72,10 +72,10 @@ print_body_rules() {
 ### Body Format
 ```markdown
 ## New Features
-- [ ] Feature description
+- Feature description
 
 ## Bug Fixes
-- [ ] Bug fix description
+- Bug fix description
 
 ## Documentation
 - Documentation description
@@ -88,8 +88,7 @@ print_body_rules() {
 ```
 
 **Rules**:
-- Use checkboxes (`- [ ]`) for New Features and Bug Fixes
-- Use regular bullets (`-`) for Documentation, Refactoring and Breaking Changes
+- Use regular bullets (`-`) for all sections
 - Skip sections with no items
 - Keep descriptions concise
 - "Bug Fixes" and "Refactoring" are only for pre-existing code. Do not list changes to code introduced within this PR.
@@ -245,10 +244,10 @@ ERROR: PR body must contain at least one valid section header.
 
 Required format:
 ## New Features
-- [ ] Feature description
+- Feature description
 
 ## Bug Fixes
-- [ ] Bug fix description
+- Bug fix description
 
 ## Refactoring
 - Refactoring description

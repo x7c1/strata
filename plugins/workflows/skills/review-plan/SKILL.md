@@ -18,8 +18,9 @@ Reviews all documents in a plan directory to ensure quality before implementatio
 - Read ALL documents in the plan directory (README.md, adr.md, research notes, etc.)
 - Check for a `plans/` subdirectory — if sub-plans exist, read those as well
 - Analyze documents from multiple review perspectives
-- Identify open questions that need clarification
-- Provide structured feedback with specific issues and suggestions
+- Compile all issues, warnings, suggestions, and open questions
+- Walk through each item **one at a time** with the user, asking for their input before moving to the next
+- After resolving all items, update the plan document to reflect decisions made
 - If the review assessment is "Ready" and the user approves, change the plan's `Status:` from `Draft` to `Open`
 
 ## Review Perspectives
@@ -64,37 +65,33 @@ Only applicable when the plan has a `plans/` subdirectory containing sub-plans:
 
 ## Output Format
 
-Provide feedback in the following structure:
+### Phase 1: Internal Analysis
 
-```markdown
-## Review Summary
+Silently analyze all documents and compile a list of items to discuss. Categorize each as:
 
-[Overall assessment: Ready / Needs Minor Revision / Needs Major Revision]
+- **Critical Issue**: Must be resolved before implementation
+- **Warning**: Should be addressed but not blocking
+- **Suggestion**: Optional improvement
+- **Open Question**: Needs clarification from the plan author
 
-## Critical Issues
+### Phase 2: Interactive Walkthrough
 
-[Issues that must be resolved before implementation]
+Present items to the user **one at a time**, starting with critical issues:
 
-- Issue 1: [description]
-  - Location: [file and section]
-  - Suggestion: [how to fix]
+- State the item clearly (category, location, description)
+- Explain why it matters
+- **Present your own recommendation first with reasoning**, then ask using structured choices (e.g., "Yes / No / Discuss further") via AskUserQuestion — do not use open-ended free-text questions
+- After the user responds, update the plan document immediately if a change was agreed upon
+- Then move to the next item
 
-## Warnings
+### Phase 3: Final Verification
 
-[Issues that should be addressed but are not blocking]
+After all items are resolved:
 
-## Suggestions
+- Show the checklist verification with results
+- If all checks pass, ask the user whether to change `Status: Draft` to `Status: Open`
 
-[Optional improvements]
-
-## Open Questions
-
-[Points that need clarification or discussion with the plan author]
-
-- Question 1: [what needs clarification]
-  - Context: [why this matters for implementation]
-
-## Checklist Verification
+### Checklist
 
 - [ ] Documents are internally consistent
 - [ ] Technical approach is feasible
@@ -102,7 +99,6 @@ Provide feedback in the following structure:
 - [ ] Scope is well-defined
 - [ ] Sub-plans are consistent with parent plan (if applicable)
 - [ ] README.md has a `Status:` line after the heading
-```
 
 ## Example Usage
 
