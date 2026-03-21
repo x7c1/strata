@@ -78,6 +78,12 @@ echo "=== Testing render (with rate_limits) ==="
 output=$(render "~/project" "Opus 4.6" "32.5" "main" "23.5" "41.2" "$future" "$future" 80)
 plain=$(echo "$output" | strip_ansi)
 
+echo ""
+echo "--- output preview ---"
+printf '%b\n' "$output"
+echo "----------------------"
+echo ""
+
 line1=$(echo "$plain" | sed -n '1p')
 line2=$(echo "$plain" | sed -n '2p')
 line3=$(echo "$plain" | sed -n '3p')
@@ -114,6 +120,12 @@ echo "=== Testing render (without rate_limits) ==="
 
 output=$(render "~/project" "Sonnet 4.6" "10.0" "dev" "" "" "" "" 80)
 plain=$(echo "$output" | strip_ansi)
+
+echo ""
+echo "--- output preview ---"
+printf '%b\n' "$output"
+echo "----------------------"
+echo ""
 
 line2=$(echo "$plain" | sed -n '2p')
 line3=$(echo "$plain" | sed -n '3p')
