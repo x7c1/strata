@@ -62,12 +62,17 @@ render() {
   local l1="$(printf "${TEAL}%3s${RST}" "ctx")$(bar "$ctx" "$TEAL")$(printf "${TEAL}%6s${RST}" "$(printf "%04.1f%%" "$ctx")")"
   printf '%b%*s  %b\n' "$l1" 9 "" "${display_path}"
 
+  # Width of the left section: label(3) + bar(12) + pct(6) + " ↻ "(3) + time(6) = 30
+  local left_width=30
+
   # Line 2: 5h usage + reset (left), branch (right)
   local l2=""
   if [ -n "$f5" ]; then
     local f5_pct
     f5_pct=$(printf "%04.1f%%" "$f5")
     l2="$(printf "${PURPLE}%3s${RST}" "5h")$(bar "$f5" "$PURPLE")$(printf "${PURPLE}%6s${RST}" "$f5_pct") ${DIM}↻ $(remaining "$f5r")${RST}"
+  else
+    l2="$(printf "%${left_width}s" "")"
   fi
   local r2=""
   [ -n "$branch" ] && r2="${branch}"
@@ -79,6 +84,8 @@ render() {
     local s7_pct
     s7_pct=$(printf "%04.1f%%" "$s7")
     l3="$(printf "${RED}%3s${RST}" "7d")$(bar "$s7" "$RED")$(printf "${RED}%6s${RST}" "$s7_pct") ${DIM}↻ $(remaining "$s7r")${RST}"
+  else
+    l3="$(printf "%${left_width}s" "")"
   fi
   printf '%b  %b\n' "$l3" "${DIM}${model_label}${RST}"
 }
@@ -137,7 +144,7 @@ remaining() {
   if [ -z "$reset_epoch" ]; then printf "%6s" "?"; return; fi
 
   local now
-  now=$(date +%s)
+  now=${REMAINING_NOW:-$(date +%s)}
   local diff=$((reset_epoch - now))
   if [ "$diff" -le 0 ]; then printf "%6s" "now"; return; fi
 

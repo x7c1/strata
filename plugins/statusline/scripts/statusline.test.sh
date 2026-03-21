@@ -58,17 +58,21 @@ assert_eq "returns '?' when reset_epoch is empty" \
 assert_eq "returns 'now' when reset is in past" \
   "   now" "$(remaining "$past")"
 
-reset_2h=$((now + 7200))
-assert_eq "formats hours and minutes" \
-  "02h00m" "$(remaining "$reset_2h")"
+# Use a fixed reference point to avoid timing drift between
+# the test's "now" and the "now" inside remaining().
+far_future=$((now + 86400 * 30))
 
-reset_1d12h=$((now + 86400 + 43200))
+reset_2h=$((far_future + 7200))
+REMAINING_NOW=$far_future assert_eq "formats hours and minutes" \
+  "02h00m" "$(REMAINING_NOW=$far_future remaining "$reset_2h")"
+
+reset_1d12h=$((far_future + 86400 + 43200))
 assert_eq "formats days and hours" \
-  "01d12h" "$(remaining "$reset_1d12h")"
+  "01d12h" "$(REMAINING_NOW=$far_future remaining "$reset_1d12h")"
 
-reset_3d0h=$((now + 259200))
+reset_3d0h=$((far_future + 259200))
 assert_eq "formats multi-day" \
-  "03d00h" "$(remaining "$reset_3d0h")"
+  "03d00h" "$(REMAINING_NOW=$far_future remaining "$reset_3d0h")"
 
 # --- render ---
 
@@ -141,6 +145,20 @@ echo "$line3" | grep -q "\[Sonnet 4.6\]" && { echo "PASS: line 3 still shows mod
 
 echo "$line2" | grep -q "dev" && { echo "PASS: line 2 still shows branch"; pass=$((pass + 1)); } \
   || { echo "FAIL: line 2 missing branch without rate_limits"; fail=$((fail + 1)); }
+
+# Verify alignment: branch and model should not be left-aligned.
+# With rate_limits, line 2 has a bar section of fixed width before the branch.
+# Without rate_limits, the same padding should be preserved.
+# " 5h▕██░░░░░░░░▏ 23.5% ↻ 01h00m  main" -> leading width before "main" is ~32 chars
+# Without rate_limits, "dev" should start at a similar column, not at column 3.
+
+leading_spaces_l2=$(echo "$line2" | sed 's/[^ ].*//' | wc -c)
+[ "$leading_spaces_l2" -ge 20 ] && { echo "PASS: line 2 branch is right-padded (not left-aligned)"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 2 branch is left-aligned (leading spaces: $((leading_spaces_l2 - 1)))"; fail=$((fail + 1)); }
+
+leading_spaces_l3=$(echo "$line3" | sed 's/[^ ].*//' | wc -c)
+[ "$leading_spaces_l3" -ge 20 ] && { echo "PASS: line 3 model is right-padded (not left-aligned)"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 3 model is left-aligned (leading spaces: $((leading_spaces_l3 - 1)))"; fail=$((fail + 1)); }
 
 # --- Results ---
 
