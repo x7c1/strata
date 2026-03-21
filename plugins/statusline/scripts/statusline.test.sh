@@ -137,14 +137,20 @@ line3=$(echo "$plain" | sed -n '3p')
 echo "$line2" | grep -q "5h" && { echo "PASS: line 2 shows 5h label as placeholder"; pass=$((pass + 1)); } \
   || { echo "FAIL: line 2 missing 5h label"; fail=$((fail + 1)); }
 
-echo "$line2" | grep -q '?%' && { echo "PASS: line 2 shows ?% when no rate_limits"; pass=$((pass + 1)); } \
-  || { echo "FAIL: line 2 missing ?% placeholder"; fail=$((fail + 1)); }
+echo "$line2" | grep -q '? %' && { echo "PASS: line 2 shows '? %' when no rate_limits"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 2 missing '? %' placeholder"; fail=$((fail + 1)); }
+
+echo "$line2" | grep -q '00h00m' && { echo "PASS: line 2 shows 00h00m when no rate_limits"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 2 missing 00h00m placeholder"; fail=$((fail + 1)); }
 
 echo "$line3" | grep -q "7d" && { echo "PASS: line 3 shows 7d label as placeholder"; pass=$((pass + 1)); } \
   || { echo "FAIL: line 3 missing 7d label"; fail=$((fail + 1)); }
 
-echo "$line3" | grep -q '?%' && { echo "PASS: line 3 shows ?% when no rate_limits"; pass=$((pass + 1)); } \
-  || { echo "FAIL: line 3 missing ?% placeholder"; fail=$((fail + 1)); }
+echo "$line3" | grep -q '? %' && { echo "PASS: line 3 shows '? %' when no rate_limits"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 3 missing '? %' placeholder"; fail=$((fail + 1)); }
+
+echo "$line3" | grep -q '00h00m' && { echo "PASS: line 3 shows 00h00m when no rate_limits"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 3 missing 00h00m placeholder"; fail=$((fail + 1)); }
 
 echo "$line3" | grep -q "\[Sonnet 4.6\]" && { echo "PASS: line 3 still shows model"; pass=$((pass + 1)); } \
   || { echo "FAIL: line 3 missing model without rate_limits"; fail=$((fail + 1)); }
