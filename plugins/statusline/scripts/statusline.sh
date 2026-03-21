@@ -27,7 +27,7 @@ main() {
   ctx=$(printf "%.1f" "$(echo "$input" | jq -r '.context_window.used_percentage // 0')")
   cwd=$(echo "$input" | jq -r '.workspace.current_dir // ""')
   project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""')
-  branch=$(git -C "$project_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+  branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
   display_path="${cwd/$HOME/\~}"
 
   local cols
