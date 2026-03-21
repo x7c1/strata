@@ -11,10 +11,6 @@
 #     }
 #   }
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# shellcheck source=platform.sh
-source "$SCRIPT_DIR/platform.sh"
-
 # ANSI colors
 RST='\033[0m'
 DIM='\033[2m'
@@ -31,20 +27,17 @@ main() {
   ctx=$(printf "%.1f" "$(echo "$input" | jq -r '.context_window.used_percentage // 0')")
   cwd=$(echo "$input" | jq -r '.workspace.current_dir // ""')
   project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""')
-  branch=$(git -C "$project_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+  branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
   display_path="${cwd/$HOME/\~}"
 
   local cols
   cols=$(tput cols 2>/dev/null || echo 80)
 
-  local usage_file="${USAGE_LOG_DIR:-${HOME}/.claude/token-logs}/usage.jsonl"
   local f5 s7 f5r s7r
-  {
-    read -r f5
-    read -r s7
-    read -r f5r
-    read -r s7r
-  } < <(load_usage "$usage_file")
+  f5=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
+  s7=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+  f5r=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+  s7r=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
 
   render "$display_path" "$model" "$ctx" "$branch" "$f5" "$s7" "$f5r" "$s7r" "$cols"
 }
@@ -69,12 +62,17 @@ render() {
   local l1="$(printf "${TEAL}%3s${RST}" "ctx")$(bar "$ctx" "$TEAL")$(printf "${TEAL}%6s${RST}" "$(printf "%04.1f%%" "$ctx")")"
   printf '%b%*s  %b\n' "$l1" 9 "" "${display_path}"
 
+  # Width of the left section: label(3) + bar(12) + pct(6) + " ↻ "(3) + time(6) = 30
+  local left_width=30
+
   # Line 2: 5h usage + reset (left), branch (right)
   local l2=""
   if [ -n "$f5" ]; then
-    local f5_bar="$f5"; [ "$f5" = "?" ] && f5_bar="0"
-    local f5_pct; [ "$f5" = "?" ] && f5_pct="?%" || f5_pct=$(printf "%04.1f%%" "$f5")
-    l2="$(printf "${PURPLE}%3s${RST}" "5h")$(bar "$f5_bar" "$PURPLE")$(printf "${PURPLE}%6s${RST}" "$f5_pct") ${DIM}↻ $(remaining "$f5r")${RST}"
+    local f5_pct
+    f5_pct=$(printf "%04.1f%%" "$f5")
+    l2="$(printf "${PURPLE}%3s${RST}" "5h")$(bar "$f5" "$PURPLE")$(printf "${PURPLE}%6s${RST}" "$f5_pct") ${DIM}↻ $(remaining "$f5r")${RST}"
+  else
+    l2="$(printf "${DIM}%3s${RST}" "5h")$(bar "0" "$DIM")$(printf "${DIM}%6s${RST}" "? %") ${DIM}↻ 00h00m${RST}"
   fi
   local r2=""
   [ -n "$branch" ] && r2="${branch}"
@@ -83,33 +81,13 @@ render() {
   # Line 3: 7d usage + reset (left), model (right)
   local l3=""
   if [ -n "$s7" ]; then
-    local s7_bar="$s7"; [ "$s7" = "?" ] && s7_bar="0"
-    local s7_pct; [ "$s7" = "?" ] && s7_pct="?%" || s7_pct=$(printf "%04.1f%%" "$s7")
-    l3="$(printf "${RED}%3s${RST}" "7d")$(bar "$s7_bar" "$RED")$(printf "${RED}%6s${RST}" "$s7_pct") ${DIM}↻ $(remaining "$s7r")${RST}"
+    local s7_pct
+    s7_pct=$(printf "%04.1f%%" "$s7")
+    l3="$(printf "${RED}%3s${RST}" "7d")$(bar "$s7" "$RED")$(printf "${RED}%6s${RST}" "$s7_pct") ${DIM}↻ $(remaining "$s7r")${RST}"
+  else
+    l3="$(printf "${DIM}%3s${RST}" "7d")$(bar "0" "$DIM")$(printf "${DIM}%6s${RST}" "? %") ${DIM}↻ 00h00m${RST}"
   fi
   printf '%b  %b\n' "$l3" "${DIM}${model_label}${RST}"
-}
-
-# Load usage data from the last line of usage.jsonl.
-# Outputs four lines: f5 s7 f5r s7r (empty lines when no data).
-load_usage() {
-  local usage_file="$1"
-  local last=""
-  if [ -f "$usage_file" ]; then
-    last=$(tail -1 "$usage_file")
-  fi
-
-  if [ -z "$last" ]; then
-    printf '?\n?\n\n\n'
-    return
-  fi
-
-  local f5 s7 f5r s7r
-  f5=$(printf "%.1f" "$(echo "$last" | jq -r '.five_hour.utilization // 0')")
-  s7=$(printf "%.1f" "$(echo "$last" | jq -r '.seven_day.utilization // 0')")
-  f5r=$(echo "$last" | jq -r '.five_hour.resets_at // empty')
-  s7r=$(echo "$last" | jq -r '.seven_day.resets_at // empty')
-  printf '%s\n%s\n%s\n%s\n' "$f5" "$s7" "$f5r" "$s7r"
 }
 
 # Return visible width (strip ANSI escapes)
@@ -143,15 +121,10 @@ bar() {
 }
 
 # Return utilization, or "0.0" if the reset time has already passed.
+# reset_at is expected as Unix epoch seconds.
 effective_utilization() {
-  local util="$1" reset_at="$2"
-  if [ -z "$reset_at" ] || [ "$util" = "?" ]; then
-    echo "$util"
-    return
-  fi
-  local reset_epoch
-  reset_epoch=$(parse_iso_date "$reset_at")
-  if [ -z "$reset_epoch" ]; then
+  local util="$1" reset_epoch="$2"
+  if [ -z "$reset_epoch" ] || [ -z "$util" ]; then
     echo "$util"
     return
   fi
@@ -164,17 +137,14 @@ effective_utilization() {
   fi
 }
 
-# Calculate remaining time until reset
+# Calculate remaining time until reset.
+# reset_epoch is expected as Unix epoch seconds.
 remaining() {
-  local reset_at=$1
-  if [ -z "$reset_at" ]; then printf "%6s" "?"; return; fi
-
-  local reset_epoch
-  reset_epoch=$(parse_iso_date "$reset_at")
+  local reset_epoch=$1
   if [ -z "$reset_epoch" ]; then printf "%6s" "?"; return; fi
 
   local now
-  now=$(date +%s)
+  now=${REMAINING_NOW:-$(date +%s)}
   local diff=$((reset_epoch - now))
   if [ "$diff" -le 0 ]; then printf "%6s" "now"; return; fi
 
