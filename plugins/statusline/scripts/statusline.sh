@@ -72,7 +72,7 @@ render() {
     f5_pct=$(printf "%04.1f%%" "$f5")
     l2="$(printf "${PURPLE}%3s${RST}" "5h")$(bar "$f5" "$PURPLE")$(printf "${PURPLE}%6s${RST}" "$f5_pct") ${DIM}↻ $(remaining "$f5r")${RST}"
   else
-    l2="$(printf "%${left_width}s" "")"
+    l2="$(printf "${DIM}%3s${RST}" "5h")$(bar "0" "$DIM")$(printf "${DIM}%6s${RST}" "?%") ${DIM}↻ $(remaining "")${RST}"
   fi
   local r2=""
   [ -n "$branch" ] && r2="${branch}"
@@ -85,7 +85,7 @@ render() {
     s7_pct=$(printf "%04.1f%%" "$s7")
     l3="$(printf "${RED}%3s${RST}" "7d")$(bar "$s7" "$RED")$(printf "${RED}%6s${RST}" "$s7_pct") ${DIM}↻ $(remaining "$s7r")${RST}"
   else
-    l3="$(printf "%${left_width}s" "")"
+    l3="$(printf "${DIM}%3s${RST}" "7d")$(bar "0" "$DIM")$(printf "${DIM}%6s${RST}" "?%") ${DIM}↻ $(remaining "")${RST}"
   fi
   printf '%b  %b\n' "$l3" "${DIM}${model_label}${RST}"
 }

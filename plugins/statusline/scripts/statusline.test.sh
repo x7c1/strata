@@ -134,31 +134,23 @@ echo ""
 line2=$(echo "$plain" | sed -n '2p')
 line3=$(echo "$plain" | sed -n '3p')
 
-echo "$line2" | grep -qv "5h" && { echo "PASS: line 2 omits 5h when no rate_limits"; pass=$((pass + 1)); } \
-  || { echo "FAIL: line 2 should omit 5h when no rate_limits"; fail=$((fail + 1)); }
+echo "$line2" | grep -q "5h" && { echo "PASS: line 2 shows 5h label as placeholder"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 2 missing 5h label"; fail=$((fail + 1)); }
 
-echo "$line3" | grep -qv "7d" && { echo "PASS: line 3 omits 7d when no rate_limits"; pass=$((pass + 1)); } \
-  || { echo "FAIL: line 3 should omit 7d when no rate_limits"; fail=$((fail + 1)); }
+echo "$line2" | grep -q '?%' && { echo "PASS: line 2 shows ?% when no rate_limits"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 2 missing ?% placeholder"; fail=$((fail + 1)); }
+
+echo "$line3" | grep -q "7d" && { echo "PASS: line 3 shows 7d label as placeholder"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 3 missing 7d label"; fail=$((fail + 1)); }
+
+echo "$line3" | grep -q '?%' && { echo "PASS: line 3 shows ?% when no rate_limits"; pass=$((pass + 1)); } \
+  || { echo "FAIL: line 3 missing ?% placeholder"; fail=$((fail + 1)); }
 
 echo "$line3" | grep -q "\[Sonnet 4.6\]" && { echo "PASS: line 3 still shows model"; pass=$((pass + 1)); } \
   || { echo "FAIL: line 3 missing model without rate_limits"; fail=$((fail + 1)); }
 
 echo "$line2" | grep -q "dev" && { echo "PASS: line 2 still shows branch"; pass=$((pass + 1)); } \
   || { echo "FAIL: line 2 missing branch without rate_limits"; fail=$((fail + 1)); }
-
-# Verify alignment: branch and model should not be left-aligned.
-# With rate_limits, line 2 has a bar section of fixed width before the branch.
-# Without rate_limits, the same padding should be preserved.
-# " 5h▕██░░░░░░░░▏ 23.5% ↻ 01h00m  main" -> leading width before "main" is ~32 chars
-# Without rate_limits, "dev" should start at a similar column, not at column 3.
-
-leading_spaces_l2=$(echo "$line2" | sed 's/[^ ].*//' | wc -c)
-[ "$leading_spaces_l2" -ge 20 ] && { echo "PASS: line 2 branch is right-padded (not left-aligned)"; pass=$((pass + 1)); } \
-  || { echo "FAIL: line 2 branch is left-aligned (leading spaces: $((leading_spaces_l2 - 1)))"; fail=$((fail + 1)); }
-
-leading_spaces_l3=$(echo "$line3" | sed 's/[^ ].*//' | wc -c)
-[ "$leading_spaces_l3" -ge 20 ] && { echo "PASS: line 3 model is right-padded (not left-aligned)"; pass=$((pass + 1)); } \
-  || { echo "FAIL: line 3 model is left-aligned (leading spaces: $((leading_spaces_l3 - 1)))"; fail=$((fail + 1)); }
 
 # --- Results ---
 
