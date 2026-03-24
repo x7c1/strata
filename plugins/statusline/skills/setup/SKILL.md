@@ -4,17 +4,16 @@ Configures the Claude Code status line for the current project by writing the st
 
 ## Instructions
 
-- Locate the installed statusline plugin's `statusline.sh` script under `~/.claude/plugins/cache/`
-  - Search for a file matching the pattern `~/.claude/plugins/cache/strata-dev/statusline/*/scripts/statusline.sh`
-  - If multiple versions exist, use the most recent one
-  - If not found, inform the user that the statusline plugin is not installed and they should install it first
+- Resolve the absolute path to `statusline.sh` from this skill's base directory
+  - The script is located at `../../scripts/statusline.sh` relative to this skill's base directory
+  - Convert the resolved path to an absolute path
 - Read the project's `.claude/settings.local.json` if it exists (or start with an empty object `{}`)
 - Set the `statusLine` field with the resolved absolute path:
   ```json
   {
     "statusLine": {
       "type": "command",
-      "command": "<resolved-absolute-path>/scripts/statusline.sh"
+      "command": "<resolved-absolute-path>"
     }
   }
   ```

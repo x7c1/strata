@@ -75,14 +75,14 @@ get_branch_name() {
         [[ -z "$subcmd" ]] && continue
         # checkout -b and switch -c are always branch creation regardless of branch name
         if echo "$subcmd" | grep -qE 'git\b.*\b(checkout -b|switch -c)'; then
-            echo "$subcmd" | sed -E 's/.*\b(checkout -b|switch -c) +([^ ]+).*/\2/'
+            echo "$subcmd" | sed -E 's/.*(checkout -b|switch -c) +([^ ]+).*/\2/'
             return
         fi
         if _is_single_non_branch_command "$subcmd"; then
             continue
         fi
         if echo "$subcmd" | grep -qE 'git\b.*\bbranch [^-]'; then
-            echo "$subcmd" | sed -E 's/.*\bbranch +([^-][^ ]*).*/\1/'
+            echo "$subcmd" | sed -E 's/.*branch +([^-][^ ]*).*/\1/'
             return
         fi
     done <<< "$(_split_commands "$command")"
