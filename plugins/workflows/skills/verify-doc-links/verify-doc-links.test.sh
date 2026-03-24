@@ -6,6 +6,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VERIFY="$SCRIPT_DIR/verify-doc-links.sh"
 FIXTURES="$SCRIPT_DIR/tests/fixtures"
 
+# Create no-newline fixture at runtime (git/linters auto-add trailing newlines)
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+printf '# No newline' > "$TMPDIR/no-newline.md"
+
 pass=0
 fail=0
 
@@ -93,10 +98,10 @@ echo ""
 echo "=== Testing trailing newline ==="
 
 assert_failure "file without trailing newline fails" \
-  bash "$VERIFY" "$FIXTURES/no-newline.md"
+  bash "$VERIFY" "$TMPDIR/no-newline.md"
 
 assert_output_contains "missing newline is reported" "NO NEWLINE" \
-  bash "$VERIFY" "$FIXTURES/no-newline.md"
+  bash "$VERIFY" "$TMPDIR/no-newline.md"
 
 # --- Missing file ---
 
