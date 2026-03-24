@@ -23,10 +23,10 @@ COMMIT_MSG=""
 if echo "$COMMAND" | grep -qE -- '-m\s'; then
     if echo "$COMMAND" | grep -q '<<.*EOF'; then
         # HEREDOC style: extract content between EOF markers
-        COMMIT_MSG=$(echo "$COMMAND" | sed -n "/<<.*EOF/,/^EOF/{/<<.*EOF/d;/^EOF/d;p}")
+        COMMIT_MSG=$(echo "$COMMAND" | sed -n -e '/<<.*EOF/,/^EOF/{' -e '/<<.*EOF/d;' -e '/^EOF/d;' -e 'p' -e '}')
     else
         # Simple -m "message" style
-        COMMIT_MSG=$(echo "$COMMAND" | sed -E 's/.*-m\s*["\x27]([^"\x27]*)["\x27].*/\1/' || true)
+        COMMIT_MSG=$(echo "$COMMAND" | sed -E "s/.*-m[[:space:]]*[\"']([^\"']*)[\"'].*/\1/" || true)
     fi
 fi
 

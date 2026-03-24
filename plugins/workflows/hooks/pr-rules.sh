@@ -127,7 +127,7 @@ print_full_template() {
 extract_title_from_command() {
     local command="$1"
     # Collapse newlines to handle body content with literal newlines from JSON
-    echo "$command" | tr '\n' ' ' | sed -E 's/.*--title\s+["\x27]([^"\x27]*)["\x27].*/\1/' || echo ""
+    echo "$command" | tr '\n' ' ' | sed -E "s/.*--title[[:space:]]+[\"']([^\"']*)[\"'].*/\1/" || echo ""
 }
 
 validate_pr_title_typed() {
@@ -202,7 +202,7 @@ extract_body_from_command() {
         echo ""
     else
         # Simple --body "content" style
-        echo "$flat_command" | sed -E 's/.*--body\s+["\x27]([^"\x27]*)["\x27].*/\1/' || echo ""
+        echo "$flat_command" | sed -E "s/.*--body[[:space:]]+[\"']([^\"']*)[\"'].*/\1/" || echo ""
     fi
 }
 
