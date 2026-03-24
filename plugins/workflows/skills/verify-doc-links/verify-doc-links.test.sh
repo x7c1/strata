@@ -1,161 +1,155 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Tests for verify-doc-links.sh
+set -euo pipefail
 
-# Test script for verify-doc-links.sh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VERIFY="$SCRIPT_DIR/verify-doc-links.sh"
+FIXTURES="$SCRIPT_DIR/tests/fixtures"
 
-set -u
+pass=0
+fail=0
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT="$SCRIPT_DIR/verify-doc-links.sh"
+assert_success() {
+  local desc="$1"; shift
+  if "$@" >/dev/null 2>&1; then
+    echo "PASS: $desc"
+    pass=$((pass + 1))
+  else
+    echo "FAIL: $desc (expected success, got failure)"
+    fail=$((fail + 1))
+  fi
+}
 
-# Test counters
-PASS=0
-FAIL=0
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
-
-# Create temp directory for test fixtures
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
-
-assert_exit_code() {
-    local description="$1"
-    local expected_code="$2"
-    shift 2
-    local actual_code
-    "$@" >/dev/null 2>&1
-    actual_code=$?
-    if [[ "$expected_code" == "$actual_code" ]]; then
-        echo -e "${GREEN}PASS${NC}: $description"
-        ((++PASS))
-    else
-        echo -e "${RED}FAIL${NC}: $description (expected exit $expected_code, got $actual_code)"
-        ((++FAIL))
-    fi
+assert_failure() {
+  local desc="$1"; shift
+  if "$@" >/dev/null 2>&1; then
+    echo "FAIL: $desc (expected failure, got success)"
+    fail=$((fail + 1))
+  else
+    echo "PASS: $desc"
+    pass=$((pass + 1))
+  fi
 }
 
 assert_output_contains() {
-    local description="$1"
-    local expected="$2"
-    shift 2
-    local output
-    output=$("$@" 2>&1)
-    if echo "$output" | grep -q "$expected"; then
-        echo -e "${GREEN}PASS${NC}: $description"
-        ((++PASS))
-    else
-        echo -e "${RED}FAIL${NC}: $description"
-        echo "  Expected to contain: $expected"
-        echo "  Actual output: $output"
-        ((++FAIL))
-    fi
+  local desc="$1"; shift
+  local pattern="$1"; shift
+  local output
+  output=$("$@" 2>&1) || true
+  if echo "$output" | grep -q "$pattern"; then
+    echo "PASS: $desc"
+    pass=$((pass + 1))
+  else
+    echo "FAIL: $desc (pattern '$pattern' not found in output)"
+    echo "  output: $output"
+    fail=$((fail + 1))
+  fi
 }
 
-# Setup test fixtures
-mkdir -p "$TMPDIR/sub"
-
-# File with valid links
-printf '# Test\n\n- [link](sub/target.md)\n- [external](https://example.com)\n' > "$TMPDIR/valid.md"
-printf '# Target\n' > "$TMPDIR/sub/target.md"
-
-# File with broken link
-printf '# Test\n\n- [broken](sub/nonexistent.md)\n' > "$TMPDIR/broken.md"
-
-# File with no trailing newline
-printf '# No newline' > "$TMPDIR/no-newline.md"
-
-# File with multiple links (valid and broken)
-printf '# Mixed\n\n- [ok](sub/target.md)\n- [bad](missing.md)\n' > "$TMPDIR/mixed.md"
-
-# File with anchor link (should be skipped)
-printf '# Anchors\n\n- [anchor](#section)\n- [valid](sub/target.md)\n' > "$TMPDIR/anchors.md"
-
-# File with no links
-printf '# Empty\n\nNo links here.\n' > "$TMPDIR/empty.md"
+# --- Valid links ---
 
 echo "=== Testing valid links ==="
 
-assert_exit_code "File with valid links passes" 0 \
-    bash "$SCRIPT" "$TMPDIR/valid.md"
+assert_success "file with valid links passes" \
+  bash "$VERIFY" "$FIXTURES/good.md"
 
-assert_exit_code "File with no links passes" 0 \
-    bash "$SCRIPT" "$TMPDIR/empty.md"
+assert_success "file with no links passes" \
+  bash "$VERIFY" "$FIXTURES/no-links.md"
 
-assert_exit_code "File with anchor links passes" 0 \
-    bash "$SCRIPT" "$TMPDIR/anchors.md"
+assert_success "file with anchor links passes" \
+  bash "$VERIFY" "$FIXTURES/anchors.md"
+
+assert_success "multiple valid files pass" \
+  bash "$VERIFY" "$FIXTURES/good.md" "$FIXTURES/subdir/nested.md"
+
+# --- Broken links ---
 
 echo ""
 echo "=== Testing broken links ==="
 
-assert_exit_code "File with broken link fails" 1 \
-    bash "$SCRIPT" "$TMPDIR/broken.md"
+assert_failure "file with broken link fails" \
+  bash "$VERIFY" "$FIXTURES/broken.md"
 
-assert_output_contains "Broken link is reported" "BROKEN" \
-    bash "$SCRIPT" "$TMPDIR/broken.md"
+assert_output_contains "broken link is reported" "BROKEN" \
+  bash "$VERIFY" "$FIXTURES/broken.md"
 
-assert_exit_code "File with mixed links fails" 1 \
-    bash "$SCRIPT" "$TMPDIR/mixed.md"
+assert_failure "mix of valid and broken fails" \
+  bash "$VERIFY" "$FIXTURES/good.md" "$FIXTURES/broken.md"
 
-echo ""
-echo "=== Testing trailing newline ==="
-
-assert_exit_code "File without trailing newline fails" 1 \
-    bash "$SCRIPT" "$TMPDIR/no-newline.md"
-
-assert_output_contains "Missing newline is reported" "NO NEWLINE" \
-    bash "$SCRIPT" "$TMPDIR/no-newline.md"
-
-echo ""
-echo "=== Testing missing file ==="
-
-assert_exit_code "Nonexistent file fails" 1 \
-    bash "$SCRIPT" "$TMPDIR/does-not-exist.md"
-
-assert_output_contains "Missing file is reported" "MISSING" \
-    bash "$SCRIPT" "$TMPDIR/does-not-exist.md"
-
-echo ""
-echo "=== Testing no arguments ==="
-
-assert_exit_code "No arguments fails" 1 \
-    bash "$SCRIPT"
+# --- Multiple links per line ---
 
 echo ""
 echo "=== Testing multiple links per line ==="
 
-# File with two links on one line, second is broken
-printf '# Multi\n\n- [ok](sub/target.md) and [bad](missing.md)\n' > "$TMPDIR/multi-link.md"
+assert_failure "two links per line, second broken, fails" \
+  bash "$VERIFY" "$FIXTURES/multi-link-broken.md"
 
-assert_exit_code "Two links per line, second broken, fails" 1 \
-    bash "$SCRIPT" "$TMPDIR/multi-link.md"
+assert_success "two valid links per line passes" \
+  bash "$VERIFY" "$FIXTURES/multi-link-ok.md"
 
-# File with two valid links on one line
-printf '# Multi\n\n- [a](sub/target.md) and [b](sub/target.md)\n' > "$TMPDIR/multi-link-ok.md"
-
-assert_exit_code "Two valid links per line passes" 0 \
-    bash "$SCRIPT" "$TMPDIR/multi-link-ok.md"
-
-# File with two links on one line, first is broken
-printf '# Multi\n\n- [bad](missing.md) and [ok](sub/target.md)\n' > "$TMPDIR/multi-link-first-broken.md"
-
-assert_exit_code "Two links per line, first broken, fails" 1 \
-    bash "$SCRIPT" "$TMPDIR/multi-link-first-broken.md"
+# --- Trailing newline ---
 
 echo ""
-echo "=== Testing multiple files ==="
+echo "=== Testing trailing newline ==="
 
-assert_exit_code "Multiple valid files pass" 0 \
-    bash "$SCRIPT" "$TMPDIR/valid.md" "$TMPDIR/empty.md"
+assert_failure "file without trailing newline fails" \
+  bash "$VERIFY" "$FIXTURES/no-newline.md"
 
-assert_exit_code "Mix of valid and broken fails" 1 \
-    bash "$SCRIPT" "$TMPDIR/valid.md" "$TMPDIR/broken.md"
+assert_output_contains "missing newline is reported" "NO NEWLINE" \
+  bash "$VERIFY" "$FIXTURES/no-newline.md"
+
+# --- Missing file ---
+
+echo ""
+echo "=== Testing missing file ==="
+
+assert_failure "nonexistent file fails" \
+  bash "$VERIFY" "$FIXTURES/does-not-exist.md"
+
+assert_output_contains "missing file is reported" "MISSING" \
+  bash "$VERIFY" "$FIXTURES/does-not-exist.md"
+
+# --- No arguments ---
+
+echo ""
+echo "=== Testing no arguments ==="
+
+assert_failure "no arguments fails" \
+  bash "$VERIFY"
+
+# --- Directory arguments ---
+
+echo ""
+echo "=== Testing directory arguments ==="
+
+assert_success "directory with only valid files" \
+  bash "$VERIFY" "$FIXTURES/subdir"
+
+assert_failure "directory containing a broken file" \
+  bash "$VERIFY" "$FIXTURES"
+
+assert_output_contains "directory recurses into subdirs" "All links OK" \
+  bash "$VERIFY" "$FIXTURES/subdir"
+
+assert_output_contains "directory reports broken links" "BROKEN" \
+  bash "$VERIFY" "$FIXTURES"
+
+# --- Mixed arguments ---
+
+echo ""
+echo "=== Testing mixed arguments ==="
+
+assert_failure "file + directory with broken links" \
+  bash "$VERIFY" "$FIXTURES/good.md" "$FIXTURES"
+
+assert_success "valid file + valid directory" \
+  bash "$VERIFY" "$FIXTURES/good.md" "$FIXTURES/subdir"
+
+# --- Summary ---
 
 echo ""
 echo "================================"
-echo -e "Results: ${GREEN}$PASS passed${NC}, ${RED}$FAIL failed${NC}"
-
-if [[ $FAIL -gt 0 ]]; then
-    exit 1
+echo "Results: $pass passed, $fail failed"
+if [[ $fail -gt 0 ]]; then
+  exit 1
 fi

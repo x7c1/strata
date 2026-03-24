@@ -2,21 +2,34 @@
 # Verify that relative links in Markdown files resolve to existing targets.
 #
 # Usage:
-#   verify-doc-links.sh FILE...
+#   verify-doc-links.sh FILE_OR_DIR...
 #
+# Accepts individual .md files or directories (recursively expands *.md).
 # Extracts Markdown links of the form [text](relative/path) and checks
 # that each target exists on the filesystem. Also verifies that every
 # file ends with a newline.
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
-  echo "Usage: $0 FILE..." >&2
+  echo "Usage: $0 FILE_OR_DIR..." >&2
   exit 1
 fi
 
+# Expand directory arguments into .md files recursively
+files=()
+for arg in "$@"; do
+  if [[ -d "$arg" ]]; then
+    while IFS= read -r -d '' f; do
+      files+=("$f")
+    done < <(find "$arg" -name '*.md' -print0)
+  else
+    files+=("$arg")
+  fi
+done
+
 errors=0
 
-for file in "$@"; do
+for file in "${files[@]}"; do
   if [[ ! -f "$file" ]]; then
     echo "MISSING: $file does not exist" >&2
     errors=$((errors + 1))
