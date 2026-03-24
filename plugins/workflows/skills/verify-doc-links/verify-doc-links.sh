@@ -26,7 +26,8 @@ for file in "$@"; do
   dir=$(dirname "$file")
 
   # Check relative links (skip URLs starting with http/https/mailto/#)
-  grep -oP '\[.*?\]\(\K[^)]+' "$file" | while read -r link; do
+  # Extract all markdown link targets, handling multiple links per line
+  { grep -oE '\]\([^)]+\)' "$file" || true; } | sed -E 's/^\]\(//; s/\)$//' | while read -r link; do
     case "$link" in
       http://*|https://*|mailto:*|\#*) continue ;;
     esac
