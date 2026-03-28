@@ -26,6 +26,12 @@ main() {
         exit 2
     fi
 
+    # Require at least one valid label (--label or -l)
+    if ! echo "$command" | grep -qE '\s(--label|-l)\s+(enhancement|bug|documentation)\b'; then
+        echo "ERROR: At least one valid label is required. Use --label (or -l) with: enhancement, bug, or documentation" >&2
+        exit 2
+    fi
+
     branch_name=$(git branch --show-current 2>/dev/null || echo "")
 
     if is_exploratory_branch "$branch_name"; then
