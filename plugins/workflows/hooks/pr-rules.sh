@@ -107,7 +107,7 @@ EOF
 print_labels_rules() {
     cat << 'EOF'
 ### Labels (Required)
-Add at least one label using `--add-label`:
+Add at least one label using `--label` (or `-l`):
 - `enhancement` - New features or improvements
 - `bug` - Bug fixes
 - `documentation` - Documentation changes
