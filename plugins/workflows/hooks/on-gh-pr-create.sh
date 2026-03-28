@@ -26,9 +26,9 @@ main() {
         exit 2
     fi
 
-    # Require at least one label (--label or -l)
-    if ! echo "$command" | grep -qE '\s(--label|-l)\s'; then
-        echo "ERROR: At least one label is required. Use --label (or -l) with: enhancement, bug, or documentation" >&2
+    # Require at least one valid label (--label or -l)
+    if ! echo "$command" | grep -qE '\s(--label|-l)\s+(enhancement|bug|documentation)\b'; then
+        echo "ERROR: At least one valid label is required. Use --label (or -l) with: enhancement, bug, or documentation" >&2
         exit 2
     fi
 

@@ -77,6 +77,12 @@ assert_exit_code "gh pr create with --label passes" 0 \
 assert_exit_code "gh pr create with -l shorthand passes" 0 \
     "gh pr create --title \"$VALID_TITLE\" --body \"$VALID_BODY\" --draft -l bug"
 
+assert_exit_code "gh pr create with invalid label fails" 2 \
+    "gh pr create --title \"$VALID_TITLE\" --body \"$VALID_BODY\" --draft --label foo"
+
+assert_exit_code "gh pr create with documentation label passes" 0 \
+    "gh pr create --title \"$VALID_TITLE\" --body \"$VALID_BODY\" --draft --label documentation"
+
 echo ""
 echo "=== Testing non-gh-pr-create commands ==="
 
