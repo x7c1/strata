@@ -17,16 +17,15 @@ NC='\033[0m'
 
 run_hook() {
     local command="$1"
-    echo "{\"tool_input\":{\"command\":\"$command\"}}" | "$SCRIPT_DIR/on-gh-pr-create.sh" 2>/dev/null
+    jq -n --arg cmd "$command" '{"tool_input":{"command":$cmd}}' \
+        | "$SCRIPT_DIR/on-gh-pr-create.sh" 2>/dev/null
 }
 
 run_hook_get_exit_code() {
     local command="$1"
-    # Escape double quotes in command for JSON
-    local escaped_command="${command//\"/\\\"}"
-    local json_input="{\"tool_input\":{\"command\":\"$escaped_command\"}}"
     local exit_code
-    echo "$json_input" | "$SCRIPT_DIR/on-gh-pr-create.sh" >/dev/null 2>&1
+    jq -n --arg cmd "$command" '{"tool_input":{"command":$cmd}}' \
+        | "$SCRIPT_DIR/on-gh-pr-create.sh" >/dev/null 2>&1
     exit_code=$?
     echo "$exit_code"
 }
@@ -106,6 +105,33 @@ assert_exit_code "--draft as part of title should fail" 2 \
 
 assert_exit_code "--draft as part of body should fail" 2 \
     "gh pr create --title \"$VALID_TITLE\" --body \"--draft $VALID_BODY\" $VALID_LABEL"
+
+echo ""
+echo "=== Testing HEREDOC body ==="
+
+HEREDOC_CMD=$(cat <<'TESTEOF'
+gh pr create --title "feat(test): add feature" --body "$(cat <<'EOF'
+## New Features
+
+- Add new feature
+EOF
+)" --draft --label enhancement
+TESTEOF
+)
+
+assert_exit_code "gh pr create with HEREDOC body and --draft passes" 0 "$HEREDOC_CMD"
+
+HEREDOC_CMD_NO_DRAFT=$(cat <<'TESTEOF'
+gh pr create --title "feat(test): add feature" --body "$(cat <<'EOF'
+## New Features
+
+- Add new feature
+EOF
+)" --label enhancement
+TESTEOF
+)
+
+assert_exit_code "gh pr create with HEREDOC body without --draft fails" 2 "$HEREDOC_CMD_NO_DRAFT"
 
 echo ""
 echo "=== Testing title validation ==="
