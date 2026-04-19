@@ -225,6 +225,58 @@ assert_exit_code "Body without valid section fails" 2 \
     run_validate_body_format 'gh pr create --body "just some text" --draft'
 
 echo ""
+echo "--- --body-file and command substitution ---"
+
+# Regression: when body content comes from --body-file or $(cat file),
+# the body text itself is not visible in the command string. The hook
+# must still give a useful signal rather than misreporting "missing
+# section header" against the opaque command.
+
+# Prepare a temporary body file with a valid section header so the
+# validator would pass if it actually read the file.
+TEST_BODY_FILE=$(mktemp)
+cat > "$TEST_BODY_FILE" <<'EOF'
+Body from file.
+
+## New Features
+- example feature
+EOF
+
+assert_exit_code "--body-file with valid file passes" 0 \
+    run_validate_body_format "gh pr create --draft --label enhancement --title \"feat(x): y\" --body-file $TEST_BODY_FILE"
+
+assert_exit_code "--body-file with valid file passes (multi-line command)" 0 \
+    run_validate_body_format "$(printf 'gh pr create \\\n    --draft \\\n    --label enhancement \\\n    --title "feat(x): y" \\\n    --body-file %s' "$TEST_BODY_FILE")"
+
+# Body passed via non-HEREDOC command substitution — hook should read
+# the referenced file the same way.
+assert_exit_code "--body \"\$(cat file)\" with valid file passes" 0 \
+    run_validate_body_format "gh pr create --draft --label enhancement --title \"feat(x): y\" --body \"\$(cat $TEST_BODY_FILE)\""
+
+# Invalid body file (no valid section header) must still be caught.
+INVALID_BODY_FILE=$(mktemp)
+cat > "$INVALID_BODY_FILE" <<'EOF'
+## Summary
+- forbidden header only
+EOF
+
+assert_exit_code "--body-file with only forbidden header fails" 2 \
+    run_validate_body_format "gh pr create --draft --label enhancement --title \"feat(x): y\" --body-file $INVALID_BODY_FILE"
+
+# Body passed via $(cat missing_file) — ambiguous; validator should not
+# falsely pass nor emit a "missing section" error against the command
+# string itself. Accept either "allow" (skip validation) or a distinct
+# error, but it must not claim section headers are missing when we
+# cannot see the body at all.
+MISSING_FILE="/tmp/pr-body-does-not-exist-$$"
+rm -f "$MISSING_FILE"
+# Current behaviour is undefined for missing files; we only assert the
+# well-defined cases above. Keep this block as a placeholder for a
+# future tightening once the happy path is fixed.
+
+rm -f "$TEST_BODY_FILE" "$INVALID_BODY_FILE"
+
+echo ""
 echo "=== Testing extract_title_from_command ==="
 
 assert_equals "Extract simple title" \
