@@ -192,18 +192,49 @@ extract_body_from_command() {
     # Collapse newlines to handle body content with literal newlines from JSON
     local flat_command
     flat_command=$(echo "$command" | tr '\n' ' ')
-    # Extract body content from --body "..." or --body '...'
-    # Handle HEREDOC style: --body "$(cat <<'EOF' ... EOF)"
-    if echo "$flat_command" | grep -qE -- '--body\s+"?\$\(cat'; then
-        # HEREDOC style - extract content between the markers
-        echo "$flat_command" | sed -E 's/.*--body\s+"?\$\(cat <<['\''"]?EOF['\''"]?//' | sed -E 's/EOF\s*\)\"?.*//'
-    elif echo "$flat_command" | grep -qE -- '--body\s+""'; then
-        # Empty body
-        echo ""
-    else
-        # Simple --body "content" style
-        echo "$flat_command" | sed -E "s/.*--body[[:space:]]+[\"']([^\"']*)[\"'].*/\1/" || echo ""
+
+    # --body-file <path> — read the referenced file. Missing files
+    # collapse to empty body; downstream validation will reject that
+    # case with the usual "empty body" error.
+    if echo "$flat_command" | grep -qE -- '--body-file[[:space:]]+[^[:space:]]+'; then
+        local path
+        path=$(echo "$flat_command" | sed -E 's/.*--body-file[[:space:]]+([^[:space:]]+).*/\1/')
+        if [[ -f "$path" ]]; then
+            cat "$path"
+        else
+            echo ""
+        fi
+        return
     fi
+
+    # --body "$(cat <path>)" — command substitution reading a plain
+    # file. Distinct from the HEREDOC form handled below.
+    if echo "$flat_command" | grep -qE -- '--body[[:space:]]+"?\$\(cat[[:space:]]+[^<][^)[:space:]]*[[:space:]]*\)'; then
+        local path
+        path=$(echo "$flat_command" | sed -E 's/.*--body[[:space:]]+"?\$\(cat[[:space:]]+([^)[:space:]]+).*/\1/')
+        if [[ -f "$path" ]]; then
+            cat "$path"
+        else
+            echo ""
+        fi
+        return
+    fi
+
+    # --body "$(cat <<EOF ... EOF)" — HEREDOC style; extract content
+    # between the markers.
+    if echo "$flat_command" | grep -qE -- '--body[[:space:]]+"?\$\(cat[[:space:]]+<<'; then
+        echo "$flat_command" | sed -E 's/.*--body[[:space:]]+"?\$\(cat <<['\''"]?EOF['\''"]?//' | sed -E 's/EOF\s*\)\"?.*//'
+        return
+    fi
+
+    # --body ""
+    if echo "$flat_command" | grep -qE -- '--body[[:space:]]+""'; then
+        echo ""
+        return
+    fi
+
+    # --body "content" / --body 'content'
+    echo "$flat_command" | sed -E "s/.*--body[[:space:]]+[\"']([^\"']*)[\"'].*/\1/" || echo ""
 }
 
 validate_pr_body_format() {
