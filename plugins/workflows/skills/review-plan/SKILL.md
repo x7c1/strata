@@ -1,4 +1,5 @@
 ---
+name: review-plan
 description: Review plan documents for consistency, feasibility, and clarity
 argument-hint: <plan-directory>
 ---

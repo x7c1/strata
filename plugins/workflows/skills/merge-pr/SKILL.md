@@ -1,4 +1,5 @@
 ---
+name: merge-pr
 description: Check CI, auto-fix trivial failures, squash merge, and update local main
 argument-hint: [pr-number]
 ---

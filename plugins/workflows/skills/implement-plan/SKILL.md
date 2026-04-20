@@ -1,4 +1,5 @@
 ---
+name: implement-plan
 description: Implement features according to a plan document, then create branch, commit, push, and PR
 argument-hint: <plan-path>
 ---
