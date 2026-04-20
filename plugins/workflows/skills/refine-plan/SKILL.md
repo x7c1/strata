@@ -8,7 +8,7 @@ argument-hint: <plan-directory>
 
 ## Overview
 
-Refines a plan against the Design Guidelines and Quality Checks. All fixes are applied directly, with every choice driven by the Design Guidelines. Judgment calls are marked with `refine-plan:confirm` and listed in the final report for user confirmation.
+Refines a plan against the Design Guidelines and Quality Checks. All fixes are applied directly, with every choice driven by the Design Guidelines. Judgment calls are marked with `refine-plan:confirm` and then walked through interactively with the user to confirm or revise each decision.
 
 ## Arguments
 
@@ -21,8 +21,8 @@ Refines a plan against the Design Guidelines and Quality Checks. All fixes are a
 - Then apply the Quality Checks to verify the plan is sound given that intent
 - Always apply a fix directly. Never leave a finding unedited.
 - Every judgment call must be made on the basis of the Design Guidelines, not on minimum effort, minimum diff, or implementation convenience. If a minimum-effort option and a system-shape option both exist, choose the system-shape option.
-- When the fix involves a judgment call (naming, concept boundaries, or any choice with defensible alternatives), insert a `refine-plan:confirm` marker next to the edit so the user can review it
-- Report the applied edits and all `refine-plan:confirm` markers at the end
+- When the fix involves a judgment call (naming, concept boundaries, or any choice with defensible alternatives), insert a `refine-plan:confirm` marker next to the edit
+- After all edits are applied, report the Applied Edits summary, then walk through each `refine-plan:confirm` marker interactively with the user
 
 ## Design Guidelines
 
@@ -175,27 +175,37 @@ The system uses a `WorkerPool` to manage parallel tasks.
 
 Markers are invisible in rendered Markdown but `grep`-able. After the user confirms, they can be removed in one pass.
 
-## Final Report
+## Output
 
-After edits are applied, report in this structure:
+### Phase 1: Applied Edits Summary
 
-### Applied Edits
-
-For each edit:
+After all edits are applied, show the user a summary. For each edit:
 
 - Location (file and section)
 - One-line summary of what changed
 - Which guideline or check drove it
 
-### Items to Confirm
+### Phase 2: Interactive Confirmation
 
-Every `refine-plan:confirm` marker must appear here. For each:
+Walk through every `refine-plan:confirm` marker **one at a time** with the user.
 
-- Location (file and section)
-- What you decided (e.g., "chose `WorkerPool` over `JobRunner`")
-- Options considered, with trade-offs
-- Which Design Guideline drove the decision, and why this option serves it best
-- Final call is the user's — confirm or redirect
+For each marker:
+
+- Present the location (file and section), what you decided, options considered with trade-offs, and which Design Guideline drove the choice
+- Ask via `AskUserQuestion` with structured choices — never use open-ended free-text questions
+- Recommended choices: `Confirm` / `Revise` / `Discuss further`
+- On `Confirm`: remove the marker from the plan
+- On `Revise`: ask the user for the desired decision, update the plan accordingly, then remove the marker
+- On `Discuss further`: offer additional context or alternatives, then re-prompt with the same choices
+
+Do not move to the next marker until the current one is resolved.
+
+### Phase 3: Wrap-up
+
+After all markers are resolved:
+
+- Verify no `refine-plan:confirm` markers remain in the plan
+- Confirm completion to the user
 
 ## Example Usage
 
