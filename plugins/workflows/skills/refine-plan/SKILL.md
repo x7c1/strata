@@ -191,24 +191,33 @@ After all edits are applied, show the user a summary. For each edit:
 
 Before entering user confirmation, re-examine every `refine-plan:confirm` marker against the Design Guidelines. Phase 1 can silently default to a minimum-effort or implementation-convenience option when a guideline-aligned answer was actually available — this pass catches those.
 
-This step is enforced via `/loop` so it cannot be skipped. Invoke `/loop` (dynamic mode, no interval) with the audit prompt defined below. The loop iterates until it converges (no markers changed in a firing) or reaches 5 iterations.
+Marker evaluation is delegated to the `audit-plan` skill, run inside a `general-purpose` subagent. Running it in a subagent gives independent context (the subagent does not inherit Phase 1's reasoning), which improves the chance of catching bias that the original author would rationalize away.
+
+This step is enforced via `/loop` so it cannot be skipped. Invoke `/loop` (dynamic mode, no interval) with the audit prompt defined below. The loop iterates until it converges (no silent fixes applied in a firing) or reaches 5 iterations.
 
 #### Audit firing prompt
 
-The iteration counter is persisted in a scratch file under `/tmp` to avoid polluting the plan directory. Derive the path as `/tmp/refine-plan-audit-<hash>.count`, where `<hash>` is the first 8 characters of the SHA-1 of the plan directory's absolute path (this prevents collisions across concurrent refine-plan runs on different plans).
+The iteration counter is persisted at `/tmp/refine-plan-audit-<hash>.count`, where `<hash>` is the first 8 characters of the SHA-1 of the plan directory's absolute path. This avoids polluting the plan directory and prevents collisions across concurrent refine-plan runs.
 
 Each firing of the loop must perform:
 
 - Read the counter from `/tmp/refine-plan-audit-<hash>.count`. If absent, treat the counter as 0. Increment it and write it back.
-- Re-read the plan directory and the Design Guidelines section of this SKILL.md.
-- For every `refine-plan:confirm` marker currently in the plan:
-  - Check whether the current choice reflects minimum-effort or implementation-convenience bias
-  - Check whether the Design Guidelines, strictly applied, determine a single answer
-  - If a single answer is determined: apply the correct edit and remove the marker (silent fix)
-  - If multiple options remain genuinely defensible under the guidelines: keep the marker
+- Invoke the `Agent` tool with `subagent_type: general-purpose`. The subagent's prompt is:
+
+  > You are running a read-only audit of a plan against the Design Guidelines.
+  >
+  > Invoke the `audit-plan` skill via the Skill tool with the argument: `<plan-directory-path>`
+  >
+  > The skill will output a JSON code block of verdicts. Return that JSON code block verbatim as your final message — do not summarize, reformat, or add commentary.
+  >
+  > Do not modify any files. Do not invoke any other skills.
+
+- Parse the returned verdict array:
+  - For each verdict with `action: "silent_fix"`: apply the specified `edit` using the `Edit` tool (this removes the marker as part of the change)
+  - For each verdict with `action: "keep"`: leave the marker in place
 - Decide the next step:
-  - If any marker was changed this firing **and** the counter is still less than 5: schedule the next wakeup via `ScheduleWakeup`
-  - Otherwise (no changes this firing, or counter has reached 5): delete the counter file, do not schedule another wakeup, and transition to Phase 2 within the same turn
+  - If any `silent_fix` was applied this firing **and** the counter is still less than 5: schedule the next wakeup via `ScheduleWakeup`
+  - Otherwise (no silent fixes this firing, or counter has reached 5): delete the counter file, do not schedule another wakeup, and transition to Phase 2 within the same turn
 
 ### Phase 2: Interactive Confirmation
 
