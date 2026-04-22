@@ -1,4 +1,5 @@
 ---
+name: new-proposals
 description: Generate improvement proposals from codebase review or user ideas
 argument-hint: [scope-or-idea]
 ---

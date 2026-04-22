@@ -1,4 +1,5 @@
 ---
+name: review-proposals
 description: Review and triage improvement proposals (Accept/Reject/Defer)
 argument-hint: [context-directory]
 ---

@@ -1,4 +1,5 @@
 ---
+name: check-repo-status
 description: Check the current git status of local repositories. Use when you need to understand the current state of repositories (branch, uncommitted changes, recent commits, remote sync).
 argument-hint: "<path> [<path> ...]"
 ---

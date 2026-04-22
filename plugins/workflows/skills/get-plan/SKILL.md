@@ -1,4 +1,5 @@
 ---
+name: get-plan
 description: Get README.md path from current branch name
 ---
 

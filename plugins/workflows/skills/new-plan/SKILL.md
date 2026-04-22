@@ -1,4 +1,5 @@
 ---
+name: new-plan
 description: Start planning process for new features, bug fixes, refactoring, or structural changes
 argument-hint: <parent-plan-path>
 ---

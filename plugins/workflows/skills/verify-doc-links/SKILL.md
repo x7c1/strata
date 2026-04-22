@@ -1,4 +1,5 @@
 ---
+name: verify-doc-links
 description: Verify that relative links in Markdown files resolve to existing targets and that files end with a newline. Use when checking documentation quality or before committing docs changes.
 argument-hint: "<file_or_dir> [<file_or_dir> ...]"
 ---

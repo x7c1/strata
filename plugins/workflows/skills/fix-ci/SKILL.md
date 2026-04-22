@@ -1,4 +1,5 @@
 ---
+name: fix-ci
 description: Fix CI failures for a pull request
 argument-hint: [pr-number]
 ---
