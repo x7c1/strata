@@ -1,6 +1,6 @@
 # Architecture Decisions
 
-Status: Open
+Status: Completed
 
 ## Overview
 

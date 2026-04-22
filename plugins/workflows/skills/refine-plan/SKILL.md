@@ -1,6 +1,6 @@
 ---
 name: refine-plan
-description: Auto-refine a plan against design guidelines and quality checks, marking judgment calls for user confirmation
+description: Auto-refine a plan by looping audit-plan until findings converge, then walk remaining judgment calls with the user
 argument-hint: <plan-directory>
 ---
 
@@ -8,163 +8,76 @@ argument-hint: <plan-directory>
 
 ## Overview
 
-Refines a plan against the Design Guidelines and Quality Checks. All fixes are applied directly, with every choice driven by the Design Guidelines. Judgment calls are marked with `refine-plan:confirm` and then walked through interactively with the user to confirm or revise each decision.
+Automation orchestrator for plan review. Invokes `audit-plan` in a cold-read loop, applies silent fixes, adds markers for judgment calls, records open questions, and then walks remaining markers with the user.
+
+All review criteria are owned by `audit-plan`. This skill does not restate them — it orchestrates the response.
 
 ## Arguments
 
 - `$0`: Path to the plan directory (required, e.g., `docs/plans/2026/001-add-feature/`)
 
-## Instructions
+## Workflow
 
-- Read all documents in the plan directory (`README.md`, `adr.md`, and any `plans/` sub-plans)
-- Apply the Design Guidelines first — an edit here often resolves what a later check would have flagged
-- Then apply the Quality Checks to verify the plan is sound given that intent
-- Always apply a fix directly. Never leave a finding unedited.
-- Every judgment call must be made on the basis of the Design Guidelines, not on minimum effort, minimum diff, or implementation convenience. If a minimum-effort option and a system-shape option both exist, choose the system-shape option.
-- When the fix involves a judgment call (naming, concept boundaries, or any choice with defensible alternatives), insert a `refine-plan:confirm` marker next to the edit
-- After all edits are applied, report the Applied Edits summary
-- Before user confirmation, run a self-audit loop via `/loop` to re-examine each marker against the Design Guidelines and resolve any whose answer is actually guideline-determined (see Phase 1.5)
-- Then walk through the remaining `refine-plan:confirm` markers interactively with the user
+### Phase 1: Audit loop
 
-## Design Guidelines
+Repeat until converged or 5 iterations reached.
 
-Apply these first. A guideline edit often shifts what the Quality Checks need to verify.
+- Invoke `audit-plan` via the `Agent` tool with `subagent_type: general-purpose`. The subagent's prompt passes only the plan directory path — no reasoning history, no edit summary — so each iteration runs with cold context. The subagent invokes the `audit-plan` skill via the Skill tool and returns the JSON code block verbatim.
+- Parse `findings` and `marker_verdicts` from the returned JSON.
+- Apply silent fixes:
+  - For findings with `action == silent_fix`, apply the `edit` operations (subject to the Stability Gate).
+  - For marker verdicts with `verdict == silent_fix`, apply the `edit` (which removes the marker as part of the change).
+- Add markers:
+  - For findings with `action == marker`, insert a `refine-plan:confirm` marker at the indicated location using the Marker Format below. Record the decision, category, and rationale from the finding.
+- Record asks:
+  - For findings with `action == ask`, record as open questions for Phase 2. Do not edit the plan.
+- Check convergence:
+  - No silent fixes applied this iteration AND all marker verdicts were `keep` AND the set of new-finding IDs matches the previous iteration's set.
 
-### 1. Concept Design First
+On exit (converged or iteration cap reached), any multi-file silent fix still blocked by the Stability Gate escalates to a marker.
 
-Decide whether new concepts are needed before deciding how to implement.
+### Stability Gate
 
-Check:
+Mechanical single-file fixes apply immediately. Multi-file reshapes must be confirmed by a second cold-read before applying silently.
 
-- Does the plan's behavior map to an existing domain concept, or does it require a new one?
-- If new: is the concept named, scoped, justified, and clearly distinct from neighboring concepts?
-- If existing: does the plan link to the concept's current definition and state the reuse explicitly?
+- **Single-file silent_fix** (one `replace` operation) — apply immediately.
+- **Multi-file silent_fix** (any combination of `create`, `delete`, or multiple `replace` ops) — do not apply on first sighting.
+  - Track which multi-file silent-fix IDs appeared as `silent_fix` in the immediately previous iteration.
+  - Apply only when the same ID is reported as `silent_fix` again. If the next iteration downgrades the finding to `marker`, follow the downgrade.
+  - At least two consecutive cold-read audits must agree before a multi-file change executes silently.
 
-Fix:
+### Phase 2: Interactive confirmation
 
-- Add a concept section when the plan silently introduces new vocabulary
-- When the plan reuses an existing concept without saying so, state the reuse and link to its definition
+- Resolve open questions (findings with `action == ask`) first. Present each via `AskUserQuestion`; apply the resulting edit.
+- Walk remaining `refine-plan:confirm` markers one at a time. For each, present the location, the decision, alternatives considered, and the driving category. Ask via `AskUserQuestion` with choices `Confirm` / `Revise` / `Discuss further`.
+  - `Confirm` — remove the marker from the plan.
+  - `Revise` — ask the user for the desired decision, apply it, remove the marker.
+  - `Discuss further` — offer additional context or alternatives, then re-prompt with the same choices.
 
-### 2. System-Shape Thinking
+Do not move to the next marker until the current one is resolved.
 
-**System-shape thinking** means deciding what the system *should* look like after the change and aiming for that — rather than deciding what the smallest edit is and letting the existing structure dictate the result.
+### Phase 3: Wrap-up
 
-Check:
+- Verify no `refine-plan:confirm` markers remain in the plan.
+- Report a summary: silent fixes applied, markers resolved, open questions answered.
 
-- Does the rationale appeal to "minimum change" or "avoid touching X"? That's a red flag.
-- Will the chosen shape still make sense once the change lands and someone reads the code fresh?
-- Is the plan bolting behavior onto a structure that's already a poor fit?
-
-Fix:
-
-- Rewrite rationale so it describes the system-shape the plan is aiming for, not the smallest change
-- When the current structure resists the change, call it out — then either defend the existing shape or plan to reshape it (see Guideline 3)
-
-### 3. Refactor Extraction
-
-When a plan needs preliminary refactoring to land cleanly, put the refactor in its own sub-plan rather than embedding it in the main plan.
-
-Check:
-
-- Is the plan mixing groundwork with feature delivery?
-- Are there steps with no value on their own beyond enabling the main change?
-
-Fix:
-
-- Move such steps to a sub-plan at `plans/NNN-<refactor-name>/`
-- Stub its `README.md` with `Status: Draft`, scope, and motivation — enough for `new-plan` or a human to expand later
-- Update the parent plan to list the sub-plan as a dependency
-
-## Quality Checks
-
-Apply these after the guidelines. Skip anything already handled there — concept naming, approach rationale, and sub-plan extraction are out of scope for this pass.
-
-### 1. Document Consistency
-
-Verify the documents agree with each other, given the concepts and system-shape now set.
-
-- Does `README.md` reflect the decisions in `adr.md` (chosen approach, trade-offs)?
-- Is terminology used uniformly across documents?
-- Do scope boundaries and estimates match between documents?
-
-### 2. Technical Feasibility
-
-Verify the approach is actually achievable (approach *selection* belongs to Guideline 2).
-
-- Are there overlooked technical constraints?
-- Are dependencies and prerequisites identified, and are they available?
-- Are assumptions about external systems (APIs, libraries, infrastructure) stated explicitly?
-
-### 3. Implementation Clarity
-
-Verify a developer can start without guessing.
-
-- Are acceptance criteria concrete and testable?
-- Are edge cases and error handling covered?
-- Are interface shapes (signatures, schemas, message formats) specified where modules meet?
-
-### 4. Completeness
-
-Verify nothing mechanical is missing.
-
-- Is a `Status:` line present immediately after the heading?
-- Are TODOs and placeholders resolved, or explicitly deferred with a reason?
-- Are all required sections present?
-
-### 5. Parent-SubPlan Health
-
-Applies when the plan already has sub-plans in a `plans/` subdirectory. Stubs freshly created by Guideline 3 are not in scope.
-
-- Does the parent still cover everything its sub-plans together cover?
-- Do sub-plans avoid overlap?
-- Do sub-plan requirements trace back to parent requirements?
-- Are there parts of the parent scope not covered by any sub-plan?
-
-## Auto-Edit Policy
-
-Every finding results in an edit. The choice between options is driven by the Design Guidelines — **never** by minimum effort, minimum diff, or implementation convenience. When the choice is a judgment call among guideline-aligned options, apply the edit and add a `refine-plan:confirm` marker so the user can review it.
-
-### Apply silently (no marker needed)
-
-When the fix is unambiguous — only one sensible outcome given the plan's content — apply the edit without a marker.
-
-- Rewriting rationale to focus on the target system-shape rather than minimum change
-- Adding, updating, or removing descriptions of structs, functions, traits, or modules to match a guideline
-- Aligning terminology across documents when the correct term is unambiguous
-- Adding a missing `Status:` line when the plan is clearly still a draft
-- Resolving TODOs and placeholders when the answer is clear from context
-- Adding missing required sections as empty stubs
-
-### Apply with a `refine-plan:confirm` marker
-
-When multiple options are defensible under the Design Guidelines, pick the one that best serves them (not the easiest or smallest), apply it, and mark it. User confirmation is required before the plan is considered settled.
-
-- Naming or concept dilemmas where several options are defensible
-- Choices that shape future design direction
-- Feasibility trade-offs that depend on runtime behavior, external systems, or non-obvious constraints
-- TODOs whose resolution requires a decision the plan has not yet made — fill in your best guess and mark it
-- Extracting prerequisite refactors into sub-plan stubs (the extraction itself, and the stub's scope)
-- Parent-subplan gap fixes that go beyond a trivial stub
-
-### Marker Format
+## Marker Format
 
 Schema:
 
 ```
-<!-- refine-plan:confirm — <decision> (Guideline <N>: <rationale>) -->
+<!-- refine-plan:confirm — <decision> (<category>: <rationale>) -->
 ```
 
-Required fields:
-
-- `refine-plan:confirm` — fixed tag (enables `grep`-based discovery)
-- `<decision>` — what you chose, in one line
-- `(Guideline <N>: <rationale>)` — which Design Guideline drove the choice, and why this option serves it best
+- `<decision>` — what was chosen, in one line.
+- `<category>` — the `audit-plan` category that drove the choice (`Guideline 2`, `Check 3`, etc.).
+- `<rationale>` — why this option serves the category best.
 
 Placement:
 
-- On the line immediately **after** the edited content
-- For list items: as a new line following the item, at the same indent level
-- For inline edits within a paragraph: at the end of the paragraph
+- Immediately after the edited content line.
+- For list items, on a new line at the same indent level.
+- For inline edits inside a paragraph, at the end of the paragraph.
 
 Example in context:
 
@@ -175,71 +88,7 @@ The system uses a `WorkerPool` to manage parallel tasks.
 <!-- refine-plan:confirm — chose `WorkerPool` over `JobRunner` (Guideline 1: aligns with the existing `Pool` concept) -->
 ```
 
-Markers are invisible in rendered Markdown but `grep`-able. After the user confirms, they can be removed in one pass.
-
-## Output
-
-### Phase 1: Applied Edits Summary
-
-After all edits are applied, show the user a summary. For each edit:
-
-- Location (file and section)
-- One-line summary of what changed
-- Which guideline or check drove it
-
-### Phase 1.5: Self-Audit Loop
-
-Before entering user confirmation, re-examine every `refine-plan:confirm` marker against the Design Guidelines. Phase 1 can silently default to a minimum-effort or implementation-convenience option when a guideline-aligned answer was actually available — this pass catches those.
-
-Marker evaluation is delegated to the `audit-plan` skill, run inside a `general-purpose` subagent. Running it in a subagent gives independent context (the subagent does not inherit Phase 1's reasoning), which improves the chance of catching bias that the original author would rationalize away.
-
-This step is enforced via `/loop` so it cannot be skipped. Invoke `/loop` (dynamic mode, no interval) with the audit prompt defined below. The loop iterates until it converges (no silent fixes applied in a firing) or reaches 5 iterations.
-
-#### Audit firing prompt
-
-The iteration counter is persisted at `/tmp/refine-plan-audit-<hash>.count`, where `<hash>` is the first 8 characters of the SHA-1 of the plan directory's absolute path. This avoids polluting the plan directory and prevents collisions across concurrent refine-plan runs.
-
-Each firing of the loop must perform:
-
-- Read the counter from `/tmp/refine-plan-audit-<hash>.count`. If absent, treat the counter as 0. Increment it and write it back.
-- Invoke the `Agent` tool with `subagent_type: general-purpose`. The subagent's prompt is:
-
-  > You are running a read-only audit of a plan against the Design Guidelines.
-  >
-  > Invoke the `audit-plan` skill via the Skill tool with the argument: `<plan-directory-path>`
-  >
-  > The skill will output a JSON code block of verdicts. Return that JSON code block verbatim as your final message — do not summarize, reformat, or add commentary.
-  >
-  > Do not modify any files. Do not invoke any other skills.
-
-- Parse the returned verdict array:
-  - For each verdict with `action: "silent_fix"`: apply the specified `edit` using the `Edit` tool (this removes the marker as part of the change)
-  - For each verdict with `action: "keep"`: leave the marker in place
-- Decide the next step:
-  - If any `silent_fix` was applied this firing **and** the counter is still less than 5: schedule the next wakeup via `ScheduleWakeup`
-  - Otherwise (no silent fixes this firing, or counter has reached 5): delete the counter file, do not schedule another wakeup, and transition to Phase 2 within the same turn
-
-### Phase 2: Interactive Confirmation
-
-Walk through every `refine-plan:confirm` marker **one at a time** with the user.
-
-For each marker:
-
-- Present the location (file and section), what you decided, options considered with trade-offs, and which Design Guideline drove the choice
-- Ask via `AskUserQuestion` with structured choices — never use open-ended free-text questions
-- Recommended choices: `Confirm` / `Revise` / `Discuss further`
-- On `Confirm`: remove the marker from the plan
-- On `Revise`: ask the user for the desired decision, update the plan accordingly, then remove the marker
-- On `Discuss further`: offer additional context or alternatives, then re-prompt with the same choices
-
-Do not move to the next marker until the current one is resolved.
-
-### Phase 3: Wrap-up
-
-After all markers are resolved:
-
-- Verify no `refine-plan:confirm` markers remain in the plan
-- Confirm completion to the user
+Markers are invisible in rendered Markdown but `grep`-able. After Phase 2 resolution, they are removed.
 
 ## Example Usage
 
