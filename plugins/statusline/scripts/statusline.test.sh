@@ -79,34 +79,21 @@ assert_eq "formats multi-day" \
 echo ""
 echo "=== Testing to_display_path ==="
 
-# Use a fixed HOME so the test does not depend on the developer's home directory
-# (bash 3.2 vs 5.x parameter expansion handles the replacement string differently;
-#  the implementation must shorten $HOME to '~' without leaving a backslash).
-#
-# Note: we export HOME inside a subshell instead of using a command-prefix
-# assignment like "HOME=... to_display_path ...". On bash 5.x (Ubuntu CI),
-# a temporary HOME prefix passed to a shell function inside $() is not
-# always visible to the function body, which made the previous form
-# silently fall through to the runner's real $HOME (e.g. /home/runner).
-call_to_display_path() {
-  local fake_home="$1" input="$2"
-  (
-    export HOME="$fake_home"
-    to_display_path "$input"
-  )
-}
+# Use a fixed HOME so the test does not depend on the developer's home directory.
+# The implementation must behave identically on bash 3.2 (macOS) and bash 5.2+
+# (Ubuntu CI), where tilde expansion inside ${var/pat/repl} replacement strings
+# differs.
+HOME=/Users/testuser assert_eq "shortens \$HOME to ~ at the start of the path" \
+  "~/foo" "$(HOME=/Users/testuser to_display_path "/Users/testuser/foo")"
 
-assert_eq "shortens \$HOME to ~ at the start of the path" \
-  "~/foo" "$(call_to_display_path /Users/testuser /Users/testuser/foo)"
+HOME=/Users/testuser assert_eq "returns ~ exactly when path equals \$HOME" \
+  "~" "$(HOME=/Users/testuser to_display_path "/Users/testuser")"
 
-assert_eq "returns ~ exactly when path equals \$HOME" \
-  "~" "$(call_to_display_path /Users/testuser /Users/testuser)"
+HOME=/Users/testuser assert_eq "leaves path unchanged when it is outside \$HOME" \
+  "/tmp/foo" "$(HOME=/Users/testuser to_display_path "/tmp/foo")"
 
-assert_eq "leaves path unchanged when it is outside \$HOME" \
-  "/tmp/foo" "$(call_to_display_path /Users/testuser /tmp/foo)"
-
-assert_eq "only rewrites a \$HOME prefix, not a later match" \
-  "/var/Users/testuser/foo" "$(call_to_display_path /Users/testuser /var/Users/testuser/foo)"
+HOME=/Users/testuser assert_eq "only rewrites a \$HOME prefix, not a later match" \
+  "/var/Users/testuser/foo" "$(HOME=/Users/testuser to_display_path "/var/Users/testuser/foo")"
 
 # --- render ---
 

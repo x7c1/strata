@@ -20,17 +20,24 @@ TEAL='\033[36m'
 
 # Replace leading $HOME in a path with ~ for display.
 #
-# Notes on the parameter expansion:
-# - bash 3.2 (macOS /bin/bash) keeps a literal backslash in the replacement
-#   string, so ${var/pat/\~} expands to "\~..." instead of "~...".
-#   bash 5.2+ with patsub_replacement strips it, masking the bug on Linux.
-#   The replacement here is just "~" with no escape — tilde expansion is not
-#   performed inside the replacement of ${var/pat/repl}, so no escape is needed.
-# - The leading "#" in "/#$HOME/" anchors the match to the start of the path,
-#   so a directory named like $HOME deeper in the path is not rewritten.
+# Why not ${path/#$HOME/~} or ${path/#$HOME/\~}:
+# - bash 3.2 (macOS /bin/bash) does not perform tilde expansion in the
+#   replacement of ${var/pat/repl}, so "~" stays as a literal "~" and
+#   "\~" stays as a literal "\~" (which would leak a backslash to output).
+# - bash 5.2+ enables patsub_replacement by default, which DOES perform
+#   tilde expansion in the replacement, so a bare "~" expands to $HOME
+#   and the whole substitution becomes a no-op. Escaping as "\~" works
+#   on 5.2+ but not on 3.2.
+# Use [[ ]] prefix matching instead so the behavior is identical on both.
 to_display_path() {
   local path="$1"
-  printf '%s' "${path/#$HOME/~}"
+  if [[ "$path" == "$HOME" ]]; then
+    printf '%s' '~'
+  elif [[ "$path" == "$HOME"/* ]]; then
+    printf '~%s' "${path#"$HOME"}"
+  else
+    printf '%s' "$path"
+  fi
 }
 
 main() {
