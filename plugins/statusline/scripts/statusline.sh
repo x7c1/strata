@@ -18,6 +18,28 @@ PURPLE='\033[35m'
 RED='\033[31m'
 TEAL='\033[36m'
 
+# Replace leading $HOME in a path with ~ for display.
+#
+# Why not ${path/#$HOME/~} or ${path/#$HOME/\~}:
+# - bash 3.2 (macOS /bin/bash) does not perform tilde expansion in the
+#   replacement of ${var/pat/repl}, so "~" stays as a literal "~" and
+#   "\~" stays as a literal "\~" (which would leak a backslash to output).
+# - bash 5.2+ enables patsub_replacement by default, which DOES perform
+#   tilde expansion in the replacement, so a bare "~" expands to $HOME
+#   and the whole substitution becomes a no-op. Escaping as "\~" works
+#   on 5.2+ but not on 3.2.
+# Use [[ ]] prefix matching instead so the behavior is identical on both.
+to_display_path() {
+  local path="$1"
+  if [[ "$path" == "$HOME" ]]; then
+    printf '%s' '~'
+  elif [[ "$path" == "$HOME"/* ]]; then
+    printf '~%s' "${path#"$HOME"}"
+  else
+    printf '%s' "$path"
+  fi
+}
+
 main() {
   local input
   input=$(cat)
@@ -28,7 +50,7 @@ main() {
   cwd=$(echo "$input" | jq -r '.workspace.current_dir // ""')
   project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""')
   branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-  display_path="${cwd/$HOME/\~}"
+  display_path=$(to_display_path "$cwd")
 
   local cols
   cols=$(tput cols 2>/dev/null || echo 80)
