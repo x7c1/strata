@@ -74,6 +74,26 @@ reset_3d0h=$((far_future + 259200))
 assert_eq "formats multi-day" \
   "03d00h" "$(REMAINING_NOW=$far_future remaining "$reset_3d0h")"
 
+# --- to_display_path ---
+
+echo ""
+echo "=== Testing to_display_path ==="
+
+# Use a fixed HOME so the test does not depend on the developer's home directory
+# (bash 3.2 vs 5.x parameter expansion handles the replacement string differently;
+#  the implementation must shorten $HOME to '~' without leaving a backslash).
+HOME=/Users/testuser assert_eq "shortens \$HOME to ~ at the start of the path" \
+  "~/foo" "$(HOME=/Users/testuser to_display_path "/Users/testuser/foo")"
+
+HOME=/Users/testuser assert_eq "returns ~ exactly when path equals \$HOME" \
+  "~" "$(HOME=/Users/testuser to_display_path "/Users/testuser")"
+
+HOME=/Users/testuser assert_eq "leaves path unchanged when it is outside \$HOME" \
+  "/tmp/foo" "$(HOME=/Users/testuser to_display_path "/tmp/foo")"
+
+HOME=/Users/testuser assert_eq "only rewrites a \$HOME prefix, not a later match" \
+  "/var/Users/testuser/foo" "$(HOME=/Users/testuser to_display_path "/var/Users/testuser/foo")"
+
 # --- render ---
 
 echo ""

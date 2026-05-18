@@ -18,6 +18,21 @@ PURPLE='\033[35m'
 RED='\033[31m'
 TEAL='\033[36m'
 
+# Replace leading $HOME in a path with ~ for display.
+#
+# Notes on the parameter expansion:
+# - bash 3.2 (macOS /bin/bash) keeps a literal backslash in the replacement
+#   string, so ${var/pat/\~} expands to "\~..." instead of "~...".
+#   bash 5.2+ with patsub_replacement strips it, masking the bug on Linux.
+#   The replacement here is just "~" with no escape — tilde expansion is not
+#   performed inside the replacement of ${var/pat/repl}, so no escape is needed.
+# - The leading "#" in "/#$HOME/" anchors the match to the start of the path,
+#   so a directory named like $HOME deeper in the path is not rewritten.
+to_display_path() {
+  local path="$1"
+  printf '%s' "${path/#$HOME/~}"
+}
+
 main() {
   local input
   input=$(cat)
@@ -28,7 +43,7 @@ main() {
   cwd=$(echo "$input" | jq -r '.workspace.current_dir // ""')
   project_dir=$(echo "$input" | jq -r '.workspace.project_dir // ""')
   branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-  display_path="${cwd/$HOME/\~}"
+  display_path=$(to_display_path "$cwd")
 
   local cols
   cols=$(tput cols 2>/dev/null || echo 80)
